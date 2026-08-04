@@ -1,0 +1,4 @@
+.DS_Store
+data/*.h5ad
+data/*.h5ad *
+

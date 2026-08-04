@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta
+      name="description"
+      content="Interactive E12 mouse cerebellum atlas for spatial transcriptomics and scRNA-seq exploration."
+    >
+    <title>E12 Mouse Cerebellum Atlas</title>
+    <link rel="stylesheet" href="assets/styles.css">
+  </head>
+  <body>
+    <nav class="navbar" aria-label="Primary navigation">
+      <a class="brand" href="#home" aria-label="E12 Mouse Cerebellum Atlas home">
+        <span class="brand-mark">E12</span>
+        <span>Mouse Cerebellum Atlas</span>
+      </a>
+      <div class="nav-links">
+        <a href="#overview">Overview</a>
+        <a href="#spatial">Spatial</a>
+        <a href="#singlecell">scRNA-seq</a>
+        <a href="#explorer">Explorer</a>
+        <a href="#data">Data</a>
+      </div>
+    </nav>
+
+    <header id="home" class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Spatial transcriptomics + scRNA-seq</p>
+        <h1>E12 Mouse Cerebellum Atlas</h1>
+        <p>
+          A paper companion for browsing embryonic cerebellar cell identities across tissue
+          coordinates, UMAP structure, library splits, QC summaries, and gene-level expression
+          statistics from the local AnnData export.
+        </p>
+        <div class="hero-actions" aria-label="Primary actions">
+          <a class="button primary" href="#explorer">Explore Atlas</a>
+          <a class="button secondary" href="#data">Inspect Data</a>
+        </div>
+      </div>
+      <figure class="hero-figure">
+        <canvas id="heroCanvas" aria-label="E12 spatial atlas preview"></canvas>
+        <figcaption>
+          E12 spatial map colored by fine annotation. Use the atlas below to switch projections,
+          filter cell sets, and export figures.
+        </figcaption>
+      </figure>
+    </header>
+
+    <main>
+      <section id="overview" class="section overview">
+        <div class="section-inner split">
+          <div>
+            <p class="eyebrow">Study View</p>
+            <h2>One stage, linked modalities, ready for exploration.</h2>
+          </div>
+          <div class="prose">
+            <p>
+              This local release centers on E12 cerebellar development. The browser view combines
+              spatial coordinates, a single-cell UMAP, library-aware slice views, broad and fine
+              cell-type annotations, and marker-ready gene summaries in a lightweight site that can
+              be shared alongside the paper.
+            </p>
+            <div class="overview-grid">
+              <article>
+                <span class="mini-label">Broad Classes</span>
+                <strong>Cb, Cb progenitors, outside Cb</strong>
+              </article>
+              <article>
+                <span class="mini-label">Fine Labels</span>
+                <strong>CN, RL, VZ, inhibitory, midbrain</strong>
+              </article>
+              <article>
+                <span class="mini-label">Embeddings</span>
+                <strong>Spatial, UMAP, 3D-ready metadata</strong>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="spatial" class="section spatial-band">
+        <div class="section-inner">
+          <div class="section-title">
+            <p class="eyebrow">Spatial Transcriptomics</p>
+            <h2>Developmental timepoint browser</h2>
+            <p>
+              Inspired by atlas portals, this row reserves a consistent place for additional
+              embryonic and postnatal stages while highlighting the active E12 dataset.
+            </p>
+          </div>
+          <div class="stage-grid" id="stageGrid">
+            <a class="stage-card live" href="#explorer" data-stage="E12">
+              <canvas aria-label="E12 atlas thumbnail"></canvas>
+              <span>E12</span>
+            </a>
+            <button class="stage-card" type="button" data-stage="E11">
+              <canvas aria-label="E11 placeholder thumbnail"></canvas>
+              <span>E11</span>
+            </button>
+            <button class="stage-card" type="button" data-stage="E13">
+              <canvas aria-label="E13 placeholder thumbnail"></canvas>
+              <span>E13</span>
+            </button>
+            <button class="stage-card" type="button" data-stage="P0">
+              <canvas aria-label="P0 placeholder thumbnail"></canvas>
+              <span>P0</span>
+            </button>
+            <button class="stage-card" type="button" data-stage="P4">
+              <canvas aria-label="P4 placeholder thumbnail"></canvas>
+              <span>P4</span>
+            </button>
+            <button class="stage-card" type="button" data-stage="P56">
+              <canvas aria-label="P56 placeholder thumbnail"></canvas>
+              <span>P56</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="singlecell" class="section singlecell-band">
+        <div class="section-inner singlecell-layout">
+          <div>
+            <p class="eyebrow">scRNA-seq</p>
+            <h2>Single-cell structure and annotation transfer</h2>
+            <p>
+              The UMAP panel provides a compact view of transcriptional neighborhoods, while the
+              atlas links those neighborhoods back to spatial organization and library identity.
+            </p>
+            <div class="marker-strip" aria-label="Example genes">
+              <button class="marker-chip" type="button" data-gene="Sox11">Sox11</button>
+              <button class="marker-chip" type="button" data-gene="Vim">Vim</button>
+              <button class="marker-chip" type="button" data-gene="Dcc">Dcc</button>
+              <button class="marker-chip" type="button" data-gene="Mdk">Mdk</button>
+              <button class="marker-chip" type="button" data-gene="Ephb2">Ephb2</button>
+            </div>
+          </div>
+          <a class="single-card" href="#explorer">
+            <canvas id="singleCellCanvas" aria-label="E12 UMAP thumbnail"></canvas>
+            <span>E12 annotated UMAP</span>
+          </a>
+        </div>
+      </section>
+
+      <section id="explorer" class="explorer-section">
+        <div class="explorer-header">
+          <div>
+            <p class="eyebrow" id="datasetSource">Loading dataset</p>
+            <h2>Interactive E12 Atlas</h2>
+          </div>
+          <dl class="stats" aria-label="Dataset summary">
+            <div><dt>Cells</dt><dd id="statCells">--</dd></div>
+            <div><dt>Genes</dt><dd id="statGenes">--</dd></div>
+            <div><dt>Libraries</dt><dd id="statLibraries">--</dd></div>
+            <div><dt>Visible</dt><dd id="statVisible">--</dd></div>
+          </dl>
+        </div>
+
+        <div class="app-shell">
+          <aside class="controls" aria-label="Explorer controls">
+            <section>
+              <div class="section-head">
+                <h3>Projection</h3>
+              </div>
+              <div class="segmented" id="projectionControls" role="group" aria-label="Projection">
+                <button data-projection="spatial" class="active" type="button">Spatial</button>
+                <button data-projection="umap" type="button">UMAP</button>
+                <button data-projection="slices" type="button">Libraries</button>
+              </div>
+            </section>
+
+            <section>
+              <label class="field-label" for="colorBy">Color by</label>
+              <select id="colorBy">
+                <option value="finer_cell_types">Fine cell type</option>
+                <option value="cell_types">Broad cell class</option>
+                <option value="leiden">Leiden cluster</option>
+                <option value="hybrid_leiden">Hybrid Leiden</option>
+                <option value="library_id">Library</option>
+                <option value="excitatory">Excitatory program</option>
+                <option value="inhibitory">Inhibitory program</option>
+              </select>
+            </section>
+
+            <section>
+              <div class="range-row">
+                <label class="field-label" for="pointSize">Point size</label>
+                <output id="pointSizeValue" for="pointSize">2.4</output>
+              </div>
+              <input id="pointSize" type="range" min="1" max="6" step="0.2" value="2.4">
+            </section>
+
+            <section>
+              <div class="section-head">
+                <h3>Annotation Sets</h3>
+                <button class="subtle" id="resetFilters" type="button">Show all</button>
+              </div>
+              <div class="legend" id="legend"></div>
+            </section>
+          </aside>
+
+          <section class="workspace" aria-label="Atlas explorer">
+            <div class="viewer">
+              <div class="viewer-head">
+                <div>
+                  <p class="eyebrow">Local AnnData browser</p>
+                  <h3 id="plotTitle">Spatial map</h3>
+                </div>
+                <div class="viewer-actions">
+                  <button id="downloadPng" type="button">Export PNG</button>
+                </div>
+              </div>
+              <div class="canvas-wrap">
+                <canvas id="atlasCanvas" aria-label="Cell projection plot"></canvas>
+                <div id="tooltip" class="tooltip" hidden></div>
+              </div>
+            </div>
+
+            <div class="lower-grid">
+              <section class="panel">
+                <div class="section-head">
+                  <h3>Annotation Counts</h3>
+                  <span id="countLabel">Fine cell type</span>
+                </div>
+                <div class="bars" id="bars"></div>
+              </section>
+
+              <section class="panel">
+                <div class="section-head">
+                  <h3>Gene Summary</h3>
+                  <input id="geneSearch" type="search" placeholder="Search genes" aria-label="Search genes">
+                </div>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Gene</th>
+                        <th>Cells</th>
+                        <th>Mean</th>
+                        <th>Dropout</th>
+                      </tr>
+                    </thead>
+                    <tbody id="geneTable"></tbody>
+                  </table>
+                </div>
+              </section>
+
+              <section class="panel qc-panel">
+                <div class="section-head">
+                  <h3>QC Summary</h3>
+                  <span>Per cell</span>
+                </div>
+                <div class="qc-grid" id="qcGrid"></div>
+              </section>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="data" class="section data-band">
+        <div class="section-inner">
+          <div class="section-title">
+            <p class="eyebrow">Data Availability</p>
+            <h2>Local AnnData source</h2>
+            <p>
+              The website reads the compact JSON export below. The raw `.h5ad` file remains in the
+              data folder and can regenerate the browser layer when annotations or metadata change.
+            </p>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Size</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>e12_celltypes_spatialclustering.h5ad</td>
+                  <td>1.7 GB</td>
+                  <td>E12 spatial/scRNA-seq AnnData with coordinates, annotations, layers, and gene statistics.</td>
+                </tr>
+                <tr>
+                  <td>site-data.json</td>
+                  <td>2.3 MB</td>
+                  <td>Browser export containing metadata, embeddings, annotation counts, QC metrics, and genes.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Kebschull Lab</span>
+      <span>Built for E12 cerebellum atlas exploration</span>
+      <a href="https://kwoniris.github.io/mouse-cereb-dev/">Design inspiration</a>
+    </footer>
+
+    <script src="assets/app.js" defer></script>
+  </body>
+</html>
