@@ -5,20 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta
       name="description"
-      content="Interactive E12 mouse cerebellum atlas for spatial transcriptomics and scRNA-seq exploration."
+      content="Multomic atlas of cerebellar development"
     >
-    <title>E12 Mouse Cerebellum Atlas</title>
+    <title>Multomic atlas of cerebellar development</title>
     <link rel="stylesheet" href="assets/styles.css">
   </head>
   <body>
     <nav class="navbar" aria-label="Primary navigation">
-      <a class="brand" href="#home" aria-label="E12 Mouse Cerebellum Atlas home">
-        <span class="brand-mark">E12</span>
+      <a class="brand" href="#home" aria-label="Multomic atlas of cerebellar development home">
+        <span class="brand-mark">Multomic atlas of cerebellar development</span>
         <span>Mouse Cerebellum Atlas</span>
       </a>
       <div class="nav-links">
         <a href="#overview">Overview</a>
-        <a href="#spatial">Spatial</a>
+        <a href="#spatial">BARseq3</a>
         <a href="#singlecell">scRNA-seq</a>
         <a href="#explorer">Explorer</a>
         <a href="#data">Data</a>
@@ -27,12 +27,10 @@
 
     <header id="home" class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">Spatial transcriptomics + scRNA-seq</p>
-        <h1>E12 Mouse Cerebellum Atlas</h1>
+        <p class="eyebrow">BARseq3 + scRNA-seq</p>
+        <h1>Multomic atlas of cerebellar development</h1>
         <p>
-          A paper companion for browsing embryonic cerebellar cell identities across tissue
-          coordinates, UMAP structure, library splits, QC summaries, and gene-level expression
-          statistics from the local AnnData export.
+          Explorer for BARseq3 and scRNAseq cerebellar development, a companion to "Excitatory progenitors drive cerebellar nuclei development and evolution (Anant et al, 2026)"
         </p>
         <div class="hero-actions" aria-label="Primary actions">
           <a class="button primary" href="#explorer">Explore Atlas</a>
@@ -42,52 +40,20 @@
       <figure class="hero-figure">
         <canvas id="heroCanvas" aria-label="E12 spatial atlas preview"></canvas>
         <figcaption>
-          E12 spatial map colored by fine annotation. Use the atlas below to switch projections,
+          Cerebellar development map colored by fine annotation. Use the atlas below to switch projections,
           filter cell sets, and export figures.
         </figcaption>
       </figure>
     </header>
 
     <main>
-      <section id="overview" class="section overview">
-        <div class="section-inner split">
-          <div>
-            <p class="eyebrow">Study View</p>
-            <h2>One stage, linked modalities, ready for exploration.</h2>
-          </div>
-          <div class="prose">
-            <p>
-              This local release centers on E12 cerebellar development. The browser view combines
-              spatial coordinates, a single-cell UMAP, library-aware slice views, broad and fine
-              cell-type annotations, and marker-ready gene summaries in a lightweight site that can
-              be shared alongside the paper.
-            </p>
-            <div class="overview-grid">
-              <article>
-                <span class="mini-label">Broad Classes</span>
-                <strong>Cb, Cb progenitors, outside Cb</strong>
-              </article>
-              <article>
-                <span class="mini-label">Fine Labels</span>
-                <strong>CN, RL, VZ, inhibitory, midbrain</strong>
-              </article>
-              <article>
-                <span class="mini-label">Embeddings</span>
-                <strong>Spatial, UMAP, 3D-ready metadata</strong>
-              </article>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section id="spatial" class="section spatial-band">
         <div class="section-inner">
           <div class="section-title">
             <p class="eyebrow">Spatial Transcriptomics</p>
-            <h2>Developmental timepoint browser</h2>
+            <h2>BARseq3 datasets</h2>
             <p>
-              Inspired by atlas portals, this row reserves a consistent place for additional
-              embryonic and postnatal stages while highlighting the active E12 dataset.
+              Developmental cerebellar sections profiled using BARseq3 spatial transcriptomics (Qi*, Anant*, Faltine-Gonzalez* et al, biorxiv, 2026)
             </p>
           </div>
           <div class="stage-grid" id="stageGrid">
@@ -123,23 +89,11 @@
         <div class="section-inner singlecell-layout">
           <div>
             <p class="eyebrow">scRNA-seq</p>
-            <h2>Single-cell structure and annotation transfer</h2>
+            <h2>scRNAseq integrated embeddings</h2>
             <p>
-              The UMAP panel provides a compact view of transcriptional neighborhoods, while the
-              atlas links those neighborhoods back to spatial organization and library identity.
+              Integrated single-cell and single-nuclei RNAseq dataset embeddings of the developing cerebellum from Anant et al (2026), ....
             </p>
-            <div class="marker-strip" aria-label="Example genes">
-              <button class="marker-chip" type="button" data-gene="Sox11">Sox11</button>
-              <button class="marker-chip" type="button" data-gene="Vim">Vim</button>
-              <button class="marker-chip" type="button" data-gene="Dcc">Dcc</button>
-              <button class="marker-chip" type="button" data-gene="Mdk">Mdk</button>
-              <button class="marker-chip" type="button" data-gene="Ephb2">Ephb2</button>
-            </div>
           </div>
-          <a class="single-card" href="#explorer">
-            <canvas id="singleCellCanvas" aria-label="E12 UMAP thumbnail"></canvas>
-            <span>E12 annotated UMAP</span>
-          </a>
         </div>
       </section>
 
@@ -147,7 +101,7 @@
         <div class="explorer-header">
           <div>
             <p class="eyebrow" id="datasetSource">Loading dataset</p>
-            <h2>Interactive E12 Atlas</h2>
+            <h2>Interactive BARseq3 Developmental Cerebellum Atlas</h2>
           </div>
           <dl class="stats" aria-label="Dataset summary">
             <div><dt>Cells</dt><dd id="statCells">--</dd></div>
@@ -258,47 +212,13 @@
         </div>
       </section>
 
-      <section id="data" class="section data-band">
-        <div class="section-inner">
-          <div class="section-title">
-            <p class="eyebrow">Data Availability</p>
-            <h2>Local AnnData source</h2>
-            <p>
-              The website reads the compact JSON export below. The raw `.h5ad` file remains in the
-              data folder and can regenerate the browser layer when annotations or metadata change.
-            </p>
-          </div>
-          <div class="data-table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Size</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>e12_celltypes_spatialclustering.h5ad</td>
-                  <td>1.7 GB</td>
-                  <td>E12 spatial/scRNA-seq AnnData with coordinates, annotations, layers, and gene statistics.</td>
-                </tr>
-                <tr>
-                  <td>site-data.json</td>
-                  <td>2.3 MB</td>
-                  <td>Browser export containing metadata, embeddings, annotation counts, QC metrics, and genes.</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+      
     </main>
 
     <footer class="footer">
-      <span>Kebschull Lab</span>
-      <span>Built for E12 cerebellum atlas exploration</span>
-      <a href="https://kwoniris.github.io/mouse-cereb-dev/">Design inspiration</a>
+      <span>Manjari Anant</span>
+      <span>Built for multiomic cerebellum development atlas exploration</span>
+      <a href="https://mmganant.github.io/CNdev_website/">Design inspiration</a>
     </footer>
 
     <script src="assets/app.js" defer></script>
