@@ -330,6 +330,29 @@ h3 {
   padding: 0.8rem;
 }
 
+.gene-legend {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.gene-gradient {
+  height: 1rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, hsl(220 82% 92%), hsl(115 82% 70%), hsl(10 82% 44%));
+}
+
+.gene-legend > div:nth-of-type(2) {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.gene-legend p {
+  color: var(--soft-ink);
+  font-size: 0.85rem;
+}
+
 @media (max-width: 760px) {
   .scrna-workspace { grid-template-columns: 1fr; }
   .scrna-canvas-wrap { border-right: 0; border-bottom: 1px solid var(--line); }

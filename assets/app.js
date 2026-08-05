@@ -1,4 +1,4 @@
-const DATA_URL = "assets/data/site-data.json";
+const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json";
 
 const projectionMap = {
   spatial: { label: "Spatial map", x: 0, y: 1 },
@@ -58,6 +58,7 @@ const els = {
 };
 
 const state = {
+  manifest: null,
   data: null,
   projection: "spatial",
   colorBy: "finer_cell_types",
@@ -77,17 +78,27 @@ const fmt = new Intl.NumberFormat("en-US");
 init();
 
 async function init() {
-  const res = await fetch(DATA_URL);
-  if (!res.ok) {
-    throw new Error(`Could not load ${DATA_URL}`);
-  }
+  const manifestResponse = await fetch(DATA_MANIFEST_URL);
+  if (!manifestResponse.ok) throw new Error(`Could not load ${DATA_MANIFEST_URL}`);
+  state.manifest = await manifestResponse.json();
+  bindEvents();
+  await loadBarseqDataset(state.manifest.default);
+}
+
+async function loadBarseqDataset(id) {
+  const entry = state.manifest.datasets.find((dataset) => dataset.id === id);
+  if (!entry) return;
+  const res = await fetch(entry.data_url);
+  if (!res.ok) throw new Error(`Could not load ${entry.data_url}`);
   state.data = await res.json();
   state.screenX = new Float32Array(state.data.cells.length);
   state.screenY = new Float32Array(state.data.cells.length);
   state.visible = new Uint8Array(state.data.cells.length);
+  state.bounds.clear();
+  state.libraryBounds = null;
+  state.selectedCodes.clear();
 
   hydrateSummary();
-  bindEvents();
   resizeCanvas();
   drawPreviewCanvases();
   renderAll();
@@ -148,6 +159,13 @@ function bindEvents() {
   els.canvas.addEventListener("mousemove", showTooltip);
   els.canvas.addEventListener("mouseleave", () => {
     els.tooltip.hidden = true;
+  });
+  document.querySelector("#stageGrid")?.addEventListener("click", async (event) => {
+    const card = event.target.closest("[data-stage]");
+    if (!card || !state.manifest.datasets.some((dataset) => dataset.id === card.dataset.stage)) return;
+    event.preventDefault();
+    await loadBarseqDataset(card.dataset.stage);
+    document.querySelector("#explorer").scrollIntoView({ block: "start" });
   });
 }
 
