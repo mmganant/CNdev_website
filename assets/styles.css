@@ -258,6 +258,84 @@ h3 {
   align-items: start;
 }
 
+.singlecell-intro {
+  max-width: 52rem;
+  margin-bottom: 1.5rem;
+}
+
+.scrna-explorer {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.scrna-toolbar,
+.scrna-summary {
+  display: flex;
+  align-items: end;
+  gap: 0.8rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.scrna-toolbar {
+  flex-wrap: wrap;
+  background: var(--wash);
+}
+
+.scrna-toolbar label {
+  display: grid;
+  gap: 0.3rem;
+  min-width: min(18rem, 100%);
+  color: var(--soft-ink);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.scrna-toolbar select {
+  min-height: 2.35rem;
+  padding: 0 0.7rem;
+  border-radius: 6px;
+}
+
+.scrna-summary {
+  justify-content: space-between;
+  align-items: center;
+  color: var(--soft-ink);
+}
+
+.scrna-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 20rem);
+  min-height: 36rem;
+}
+
+.scrna-canvas-wrap {
+  position: relative;
+  min-height: 36rem;
+  border-right: 1px solid var(--line);
+}
+
+.scrna-canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.scrna-legend {
+  overflow: auto;
+  max-height: 36rem;
+  padding: 0.8rem;
+}
+
+@media (max-width: 760px) {
+  .scrna-workspace { grid-template-columns: 1fr; }
+  .scrna-canvas-wrap { border-right: 0; border-bottom: 1px solid var(--line); }
+  .scrna-summary { align-items: flex-start; flex-direction: column; }
+}
+
 .singlecell-layout {
   align-items: center;
 }

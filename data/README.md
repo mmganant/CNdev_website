@@ -9,3 +9,12 @@ Rscript scripts/export_h5ad_site_data.R
 ```
 
 to regenerate `assets/data/site-data.json` from `data/e12_celltypes_spatialclustering.h5ad`.
+
+The scRNA-seq browser exports are generated from local Seurat `.rds` objects. They are intentionally
+not committed because the raw objects are multi-gigabyte files. Run:
+
+```sh
+Rscript scripts/export_rds_scrna_data.R /path/to/rds/folder assets/data/scrna
+```
+
+to extract only UMAP coordinates, selected annotations, and lightweight QC values into browser-ready JSON.

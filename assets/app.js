@@ -49,7 +49,6 @@ const els = {
   downloadPng: document.querySelector("#downloadPng"),
   markerChips: document.querySelectorAll(".marker-chip"),
   heroCanvas: document.querySelector("#heroCanvas"),
-  singleCellCanvas: document.querySelector("#singleCellCanvas"),
   stageCanvases: document.querySelectorAll(".stage-card canvas"),
   statCells: document.querySelector("#statCells"),
   statGenes: document.querySelector("#statGenes"),
@@ -176,9 +175,6 @@ function drawPreviewCanvases() {
   if (!state.data) return;
   if (els.heroCanvas) {
     drawStaticPreview(els.heroCanvas, "spatial", "finer_cell_types", 2.1, true);
-  }
-  if (els.singleCellCanvas) {
-    drawStaticPreview(els.singleCellCanvas, "umap", "finer_cell_types", 2.1, false);
   }
   els.stageCanvases.forEach((canvas) => {
     const card = canvas.closest(".stage-card");
