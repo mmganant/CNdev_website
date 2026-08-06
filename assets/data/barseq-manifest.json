@@ -1,0 +1,1 @@
+{"default":"E12","datasets":[{"id":"E11","title":"E11 BARseq3","source_file":"e11_slice.h5ad","data_url":"assets/data/site-data-e11.json"},{"id":"E12","title":"E12 BARseq3","source_file":"e12_celltypes_spatialclustering.h5ad","data_url":"assets/data/site-data.json"}]}

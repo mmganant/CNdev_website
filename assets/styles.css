@@ -258,6 +258,148 @@ h3 {
   align-items: start;
 }
 
+.singlecell-intro {
+  max-width: 52rem;
+  margin-bottom: 1.5rem;
+}
+
+.scrna-explorer {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.scrna-embedding-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.scrna-embedding-card {
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  box-shadow: 0 8px 22px rgba(31, 38, 35, 0.08);
+  text-align: left;
+}
+
+.scrna-embedding-card.active {
+  border-color: var(--leaf);
+  box-shadow: 0 0 0 2px rgba(37, 132, 95, 0.14);
+}
+
+.scrna-embedding-card canvas {
+  display: block;
+  width: 100%;
+  height: 9.4rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.scrna-embedding-card span {
+  display: block;
+  padding: 0.7rem 0.8rem;
+  color: var(--ink);
+  font-weight: 850;
+}
+
+.scrna-toolbar,
+.scrna-summary {
+  display: flex;
+  align-items: end;
+  gap: 0.8rem;
+  padding: 1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+.scrna-toolbar {
+  flex-wrap: wrap;
+  background: var(--wash);
+}
+
+.scrna-toolbar label {
+  display: grid;
+  gap: 0.3rem;
+  min-width: min(18rem, 100%);
+  color: var(--soft-ink);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.scrna-toolbar select {
+  min-height: 2.35rem;
+  padding: 0 0.7rem;
+  border-radius: 6px;
+}
+
+.scrna-toolbar input[type="search"] {
+  min-height: 2.35rem;
+  padding: 0 0.7rem;
+  border-radius: 6px;
+}
+
+.scrna-summary {
+  justify-content: space-between;
+  align-items: center;
+  color: var(--soft-ink);
+}
+
+.scrna-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 20rem);
+  min-height: 36rem;
+}
+
+.scrna-canvas-wrap {
+  position: relative;
+  min-height: 36rem;
+  border-right: 1px solid var(--line);
+}
+
+.scrna-canvas-wrap canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.scrna-legend {
+  overflow: auto;
+  max-height: 36rem;
+  padding: 0.8rem;
+}
+
+.gene-legend {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.gene-gradient {
+  height: 1rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, hsl(220 82% 92%), hsl(115 82% 70%), hsl(10 82% 44%));
+}
+
+.gene-legend > div:nth-of-type(2) {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.gene-legend p {
+  color: var(--soft-ink);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 760px) {
+  .scrna-workspace { grid-template-columns: 1fr; }
+  .scrna-canvas-wrap { border-right: 0; border-bottom: 1px solid var(--line); }
+  .scrna-summary { align-items: flex-start; flex-direction: column; }
+}
+
 .singlecell-layout {
   align-items: center;
 }

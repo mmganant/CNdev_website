@@ -9,3 +9,29 @@ Rscript scripts/export_h5ad_site_data.R
 ```
 
 to regenerate `assets/data/site-data.json` from `data/e12_celltypes_spatialclustering.h5ad`.
+
+Additional BARseq H5AD datasets can be exported with:
+
+```sh
+python scripts/export_h5ad_barseq_data.py /path/to/input.h5ad assets/data/site-data-stage.json "Stage BARseq3"
+```
+
+Then add the generated file to `assets/data/barseq-manifest.json` so it appears in the stage selector.
+
+The scRNA-seq browser exports are generated from local Seurat `.rds` objects. They are intentionally
+not committed because the raw objects are multi-gigabyte files. Run:
+
+```sh
+Rscript scripts/export_rds_scrna_data.R /path/to/rds/folder assets/data/scrna
+```
+
+to extract only UMAP coordinates, selected annotations, and lightweight QC values into browser-ready JSON.
+
+All-gene visualization uses sparse count shards rather than dense expression arrays. Generate them with:
+
+```sh
+Rscript scripts/export_rds_sparse_counts.R /path/to/rds/folder assets/data/scrna-counts
+```
+
+The exporter stores only nonzero cell indices and count values in small gzip files. The browser downloads
+one shard on demand when a user selects a gene; the raw RDS objects and dense expression layers remain local.

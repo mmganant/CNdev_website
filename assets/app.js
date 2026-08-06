@@ -1,4 +1,4 @@
-const DATA_URL = "assets/data/site-data.json";
+const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json";
 
 const projectionMap = {
   spatial: { label: "Spatial map", x: 0, y: 1 },
@@ -49,7 +49,6 @@ const els = {
   downloadPng: document.querySelector("#downloadPng"),
   markerChips: document.querySelectorAll(".marker-chip"),
   heroCanvas: document.querySelector("#heroCanvas"),
-  singleCellCanvas: document.querySelector("#singleCellCanvas"),
   stageCanvases: document.querySelectorAll(".stage-card canvas"),
   statCells: document.querySelector("#statCells"),
   statGenes: document.querySelector("#statGenes"),
@@ -59,6 +58,7 @@ const els = {
 };
 
 const state = {
+  manifest: null,
   data: null,
   projection: "spatial",
   colorBy: "finer_cell_types",
@@ -78,17 +78,27 @@ const fmt = new Intl.NumberFormat("en-US");
 init();
 
 async function init() {
-  const res = await fetch(DATA_URL);
-  if (!res.ok) {
-    throw new Error(`Could not load ${DATA_URL}`);
-  }
+  const manifestResponse = await fetch(DATA_MANIFEST_URL);
+  if (!manifestResponse.ok) throw new Error(`Could not load ${DATA_MANIFEST_URL}`);
+  state.manifest = await manifestResponse.json();
+  bindEvents();
+  await loadBarseqDataset(state.manifest.default);
+}
+
+async function loadBarseqDataset(id) {
+  const entry = state.manifest.datasets.find((dataset) => dataset.id === id);
+  if (!entry) return;
+  const res = await fetch(entry.data_url);
+  if (!res.ok) throw new Error(`Could not load ${entry.data_url}`);
   state.data = await res.json();
   state.screenX = new Float32Array(state.data.cells.length);
   state.screenY = new Float32Array(state.data.cells.length);
   state.visible = new Uint8Array(state.data.cells.length);
+  state.bounds.clear();
+  state.libraryBounds = null;
+  state.selectedCodes.clear();
 
   hydrateSummary();
-  bindEvents();
   resizeCanvas();
   drawPreviewCanvases();
   renderAll();
@@ -150,6 +160,13 @@ function bindEvents() {
   els.canvas.addEventListener("mouseleave", () => {
     els.tooltip.hidden = true;
   });
+  document.querySelector("#stageGrid")?.addEventListener("click", async (event) => {
+    const card = event.target.closest("[data-stage]");
+    if (!card || !state.manifest.datasets.some((dataset) => dataset.id === card.dataset.stage)) return;
+    event.preventDefault();
+    await loadBarseqDataset(card.dataset.stage);
+    document.querySelector("#explorer").scrollIntoView({ block: "start" });
+  });
 }
 
 function resizeCanvas() {
@@ -176,9 +193,6 @@ function drawPreviewCanvases() {
   if (!state.data) return;
   if (els.heroCanvas) {
     drawStaticPreview(els.heroCanvas, "spatial", "finer_cell_types", 2.1, true);
-  }
-  if (els.singleCellCanvas) {
-    drawStaticPreview(els.singleCellCanvas, "umap", "finer_cell_types", 2.1, false);
   }
   els.stageCanvases.forEach((canvas) => {
     const card = canvas.closest(".stage-card");

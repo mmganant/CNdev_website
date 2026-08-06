@@ -61,8 +61,8 @@
               <canvas aria-label="E12 atlas thumbnail"></canvas>
               <span>E12</span>
             </a>
-            <button class="stage-card" type="button" data-stage="E11">
-              <canvas aria-label="E11 placeholder thumbnail"></canvas>
+            <button class="stage-card live" type="button" data-stage="E11">
+              <canvas aria-label="E11 atlas thumbnail"></canvas>
               <span>E11</span>
             </button>
             <button class="stage-card" type="button" data-stage="E13">
@@ -86,13 +86,44 @@
       </section>
 
       <section id="singlecell" class="section singlecell-band">
-        <div class="section-inner singlecell-layout">
-          <div>
+        <div class="section-inner">
+          <div class="singlecell-intro">
             <p class="eyebrow">scRNA-seq</p>
             <h2>scRNAseq integrated embeddings</h2>
             <p>
-              Integrated single-cell and single-nuclei RNAseq dataset embeddings of the developing cerebellum from Anant et al (2026), ....
+              Integrated single-cell and single-nuclei RNA-seq embeddings of the developing cerebellum from Anant et al. (2026).
             </p>
+          </div>
+          <div id="scrnaEmbeddingGrid" class="scrna-embedding-grid" aria-label="scRNA-seq embeddings"></div>
+          <div id="scrnaExplorer" class="scrna-explorer">
+            <div class="scrna-toolbar">
+              <label>
+                <span>Dataset</span>
+                <select id="scrnaDataset" aria-label="scRNA-seq dataset"></select>
+              </label>
+              <label>
+                <span>Color by</span>
+                <select id="scrnaColorBy" aria-label="scRNA-seq annotation"></select>
+              </label>
+              <label>
+                <span>Visualize gene</span>
+                <input id="scrnaGene" type="search" list="scrnaGeneList" placeholder="Search all genes" aria-label="scRNA-seq gene expression">
+                <datalist id="scrnaGeneList"></datalist>
+              </label>
+              <button id="scrnaReset" type="button">Show all</button>
+              <button id="scrnaDownload" type="button">Export PNG</button>
+            </div>
+            <div class="scrna-summary" aria-live="polite">
+              <strong id="scrnaTitle">Loading scRNA-seq datasets</strong>
+              <span id="scrnaStats">--</span>
+            </div>
+            <div class="scrna-workspace">
+              <div class="scrna-canvas-wrap">
+                <canvas id="singleCellCanvas" aria-label="Interactive scRNA-seq UMAP"></canvas>
+                <div id="scrnaTooltip" class="tooltip" hidden></div>
+              </div>
+              <div id="scrnaLegend" class="legend scrna-legend" aria-label="scRNA-seq annotation legend"></div>
+            </div>
           </div>
         </div>
       </section>
@@ -222,5 +253,6 @@
     </footer>
 
     <script src="assets/app.js" defer></script>
+    <script src="assets/scrna.js" defer></script>
   </body>
 </html>
