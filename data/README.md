@@ -26,3 +26,12 @@ Rscript scripts/export_rds_scrna_data.R /path/to/rds/folder assets/data/scrna
 ```
 
 to extract only UMAP coordinates, selected annotations, and lightweight QC values into browser-ready JSON.
+
+All-gene visualization uses sparse count shards rather than dense expression arrays. Generate them with:
+
+```sh
+Rscript scripts/export_rds_sparse_counts.R /path/to/rds/folder assets/data/scrna-counts
+```
+
+The exporter stores only nonzero cell indices and count values in small gzip files. The browser downloads
+one shard on demand when a user selects a gene; the raw RDS objects and dense expression layers remain local.

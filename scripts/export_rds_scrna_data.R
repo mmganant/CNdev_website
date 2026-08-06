@@ -38,12 +38,7 @@ palette <- c(
   "#7c3aed", "#ca8a04", "#475569", "#f97316", "#14b8a6", "#8b5cf6"
 )
 
-gene_panel <- c(
-  "Atoh1", "Ptf1a", "Pax6", "Pax2", "Sox2", "Mki67", "Top2a", "Neurod1",
-  "Neurod2", "Barhl1", "Eomes", "Meis2", "Lhx9", "Tbr1", "Foxp2", "Tle4",
-  "Pou4f1", "Slc17a6", "Slc17a7", "Gad1", "Gad2", "Slc32a1", "Reln", "Calb1",
-  "Calb2", "Pcp2", "Gabra6", "Aldoc", "Gfap", "Aqp4", "Olig2", "Pdgfra"
-)
+gene_panel <- character()
 
 clean_number <- function(x, digits = 3) {
   out <- round(as.numeric(x), digits)
@@ -69,7 +64,9 @@ write_dataset_json <- function(path, result) {
     ',"source_file":', json_string(metadata$source_file),
     ',"generated_at":', json_string(metadata$generated_at),
     ',"n_cells":', metadata$n_cells,
-    ',"assays":[', paste(json_string(metadata$assays), collapse = ","), "]"
+    ',"assays":[', paste(json_string(metadata$assays), collapse = ","), "]",
+    ',"embeddings":[', paste(json_string(metadata$embeddings), collapse = ","), "]",
+    ',"count_index_url":', json_string(metadata$count_index_url)
   )
   writeLines(paste0('"metadata":{', metadata_json, "},"), connection, useBytes = TRUE)
   writeLines(paste0('"schema":[', paste(json_string(result$schema), collapse = ","), "],"), connection, useBytes = TRUE)
@@ -149,6 +146,15 @@ extract_dataset <- function(spec) {
   }
 
   fields <- spec$fields[spec$fields %in% names(metadata)]
+  embedding_names <- names(reductions)[vapply(reductions, function(reduction) {
+    matrix <- attributes(reduction)[["cell.embeddings"]]
+    !is.null(matrix) && nrow(matrix) == nrow(metadata) && ncol(matrix) >= 2
+  }, logical(1))]
+  extra_embedding_names <- setdiff(embedding_names, "umap")
+  extra_embeddings <- lapply(extra_embedding_names, function(name) {
+    attributes(reductions[[name]])[["cell.embeddings"]][, 1:2, drop = FALSE]
+  })
+  names(extra_embeddings) <- extra_embedding_names
   annotations <- list()
   codes <- list()
   for (field in fields) {
@@ -168,9 +174,15 @@ extract_dataset <- function(spec) {
 
   qc_fields <- c("nCount_RNA", "nFeature_RNA", "percent.mito", "percent.mt")
   qc_fields <- qc_fields[qc_fields %in% names(metadata)]
-  schema <- c("umap_x", "umap_y", fields, qc_fields)
+  extra_embedding_schema <- unlist(lapply(extra_embedding_names, function(name) {
+    c(paste0("embedding_", name, "_x"), paste0("embedding_", name, "_y"))
+  }), use.names = FALSE)
+  schema <- c("umap_x", "umap_y", extra_embedding_schema, fields, qc_fields)
   columns <- c(
     list(clean_number(embedding[, 1]), clean_number(embedding[, 2])),
+    unlist(lapply(extra_embeddings, function(matrix) {
+      list(clean_number(matrix[, 1]), clean_number(matrix[, 2]))
+    }), recursive = FALSE),
     unname(codes),
     lapply(qc_fields, function(field) clean_number(metadata[[field]], 2))
   )
@@ -208,7 +220,9 @@ extract_dataset <- function(spec) {
       source_file = spec$file,
       generated_at = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
       n_cells = nrow(metadata),
-      assays = assays
+      assays = assays,
+      embeddings = embedding_names,
+      count_index_url = paste0("assets/data/scrna-counts/", spec$slug, "/index.json")
     ),
     schema = schema,
     annotations = annotations,
