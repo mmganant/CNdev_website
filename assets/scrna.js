@@ -20,6 +20,7 @@ const scrnaState = {
   manifest: null,
   data: null,
   countIndex: null,
+  dataCache: new Map(),
   geneLookup: new Map(),
   shardCache: new Map(),
   activeGene: null,
@@ -90,9 +91,13 @@ async function loadScrnaDataset(id) {
   if (!entry) return;
   scrnaEls.title.textContent = `Loading ${entry.title}`;
   scrnaEls.stats.textContent = "Reading compact browser data…";
-  const response = await fetch(entry.data_url);
-  if (!response.ok) throw new Error(`Could not load ${entry.data_url}`);
-  scrnaState.data = await response.json();
+  scrnaState.data = scrnaState.dataCache.get(id);
+  if (!scrnaState.data) {
+    const response = await fetch(entry.data_url);
+    if (!response.ok) throw new Error(`Could not load ${entry.data_url}`);
+    scrnaState.data = await response.json();
+    scrnaState.dataCache.set(id, scrnaState.data);
+  }
   const countResponse = await fetch(scrnaState.data.metadata.count_index_url);
   if (!countResponse.ok) throw new Error("Sparse count index is unavailable");
   scrnaState.countIndex = await countResponse.json();
@@ -112,7 +117,7 @@ async function loadScrnaDataset(id) {
   scrnaEls.geneResults.hidden = true;
   scrnaEls.title.textContent = scrnaState.data.metadata.title;
   scrnaEls.stats.textContent = `${scrnaFmt.format(scrnaState.data.metadata.n_cells)} cells · ${scrnaFmt.format(scrnaState.countIndex.n_genes)} genes · ${scrnaState.data.metadata.source_file}`;
-  renderEmbeddingCards();
+  await renderEmbeddingCards();
   resizeScrnaCanvas();
   renderScrna();
 }
@@ -144,39 +149,46 @@ function humanizeScrnaField(field) {
   return field.replace(/[._]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function embeddingIndices(name = scrnaState.embedding) {
+function embeddingIndices(name = scrnaState.embedding, schema = scrnaState.schema) {
   return name === "umap"
-    ? [scrnaState.schema.umap_x, scrnaState.schema.umap_y]
-    : [scrnaState.schema[`embedding_${name}_x`], scrnaState.schema[`embedding_${name}_y`]];
+    ? [schema.umap_x, schema.umap_y]
+    : [schema[`embedding_${name}_x`], schema[`embedding_${name}_y`]];
 }
 
-function renderEmbeddingCards() {
+async function renderEmbeddingCards() {
   scrnaEls.embeddingGrid.replaceChildren();
-  for (const name of scrnaState.data.metadata.embeddings.filter((embedding) => embedding === "umap")) {
+  for (const dataset of scrnaState.manifest.datasets) {
+    let data = scrnaState.dataCache.get(dataset.id);
+    if (!data) {
+      const response = await fetch(dataset.data_url);
+      if (!response.ok) continue;
+      data = await response.json();
+      scrnaState.dataCache.set(dataset.id, data);
+    }
+    if (!data.metadata.embeddings.includes("umap")) continue;
     const button = document.createElement("button");
     button.type = "button";
     button.className = "scrna-embedding-card";
-    button.classList.toggle("active", name === scrnaState.embedding);
+    button.classList.toggle("active", dataset.id === scrnaEls.dataset.value);
     const canvas = document.createElement("canvas");
-    canvas.setAttribute("aria-label", `${name} embedding preview`);
+    canvas.setAttribute("aria-label", `${dataset.title} UMAP preview`);
     const label = document.createElement("span");
-    label.textContent = humanizeScrnaField(name);
+    label.textContent = dataset.title;
     button.append(canvas, label);
-    button.addEventListener("click", () => {
-      scrnaState.embedding = name;
-      renderEmbeddingCards();
-      renderScrna();
+    button.addEventListener("click", async () => {
+      scrnaEls.dataset.value = dataset.id;
+      await loadScrnaDataset(dataset.id);
       scrnaEls.explorer.scrollIntoView({ block: "start" });
     });
     scrnaEls.embeddingGrid.append(button);
-    drawEmbeddingPreview(canvas, name);
+    drawEmbeddingPreview(canvas, data);
   }
 }
 
-function boundsForEmbedding(name = scrnaState.embedding) {
-  const [xi, yi] = embeddingIndices(name);
+function boundsForEmbedding(name = scrnaState.embedding, data = scrnaState.data, schema = scrnaState.schema) {
+  const [xi, yi] = embeddingIndices(name, schema);
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (const cell of scrnaState.data.cells) {
+  for (const cell of data.cells) {
     const x = cell[xi], y = cell[yi];
     if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
     minX = Math.min(minX, x); maxX = Math.max(maxX, x);
@@ -185,22 +197,25 @@ function boundsForEmbedding(name = scrnaState.embedding) {
   return { minX, maxX, minY, maxY };
 }
 
-function drawEmbeddingPreview(canvas, name) {
+function drawEmbeddingPreview(canvas, data) {
+  const name = "umap";
+  const schema = Object.fromEntries(data.schema.map((field, index) => [field, index]));
   const width = 260, height = 150, dpr = window.devicePixelRatio || 1;
   canvas.width = width * dpr; canvas.height = height * dpr;
   const context = canvas.getContext("2d");
   context.setTransform(dpr, 0, 0, dpr, 0, 0);
   context.fillStyle = "#fff"; context.fillRect(0, 0, width, height);
-  const bounds = boundsForEmbedding(name);
-  const [xi, yi] = embeddingIndices(name);
-  const ci = scrnaState.schema[scrnaState.colorBy];
-  const categories = scrnaState.data.annotations[scrnaState.colorBy];
+  const bounds = boundsForEmbedding(name, data, schema);
+  const [xi, yi] = embeddingIndices(name, schema);
+  const colorBy = Object.keys(data.annotations)[0];
+  const ci = schema[colorBy];
+  const categories = data.annotations[colorBy];
   const xSpan = bounds.maxX - bounds.minX || 1, ySpan = bounds.maxY - bounds.minY || 1;
   const scale = Math.min(230 / xSpan, 120 / ySpan);
-  const step = Math.max(1, Math.floor(scrnaState.data.cells.length / 12000));
+  const step = Math.max(1, Math.floor(data.cells.length / 12000));
   context.globalAlpha = 0.7;
-  for (let i = 0; i < scrnaState.data.cells.length; i += step) {
-    const cell = scrnaState.data.cells[i];
+  for (let i = 0; i < data.cells.length; i += step) {
+    const cell = data.cells[i];
     const x = 15 + (230 - xSpan * scale) / 2 + (cell[xi] - bounds.minX) * scale;
     const y = height - 15 - (120 - ySpan * scale) / 2 - (cell[yi] - bounds.minY) * scale;
     context.fillStyle = categories[cell[ci]]?.color || "#64748b";
