@@ -33,7 +33,6 @@ const els = {
   canvas: document.querySelector("#atlasCanvas"),
   tooltip: document.querySelector("#tooltip"),
   legend: document.querySelector("#legend"),
-  bars: document.querySelector("#bars"),
   colorBy: document.querySelector("#colorBy"),
   pointSize: document.querySelector("#pointSize"),
   pointSizeValue: document.querySelector("#pointSizeValue"),
@@ -43,7 +42,6 @@ const els = {
   datasetSource: document.querySelector("#datasetSource"),
   geneSearch: document.querySelector("#geneSearch"),
   geneTable: document.querySelector("#geneTable"),
-  qcGrid: document.querySelector("#qcGrid"),
   downloadPng: document.querySelector("#downloadPng"),
   markerChips: document.querySelectorAll(".marker-chip"),
   heroCanvas: document.querySelector("#heroCanvas"),
@@ -52,7 +50,6 @@ const els = {
   statGenes: document.querySelector("#statGenes"),
   statLibraries: document.querySelector("#statLibraries"),
   statVisible: document.querySelector("#statVisible"),
-  countLabel: document.querySelector("#countLabel"),
 };
 
 const state = {
@@ -118,7 +115,6 @@ function hydrateSummary() {
   els.statLibraries.textContent = fmt.format(state.data.annotations.library_id.length);
   els.datasetSource.textContent = metadata.source_file;
   els.pointSizeValue.textContent = Number(els.pointSize.value).toFixed(1);
-  renderQcSummary();
 }
 
 function bindEvents() {
@@ -196,9 +192,7 @@ function resizeCanvas() {
 
 function renderAll() {
   els.plotTitle.textContent = projectionMap[state.projection].label;
-  els.countLabel.textContent = categoryLabels[state.colorBy];
   renderLegend();
-  renderBars();
   renderGeneTable();
   drawPlot();
 }
@@ -455,27 +449,6 @@ function renderLegend() {
   els.legend.append(fragment);
 }
 
-function renderBars() {
-  els.bars.replaceChildren();
-  const categories = [...getCategories()].sort((a, b) => b.count - a.count);
-  const maxCount = Math.max(...categories.map((item) => item.count), 1);
-  const fragment = document.createDocumentFragment();
-
-  categories.forEach((category) => {
-    const row = document.createElement("div");
-    row.className = "bar-row";
-    const width = Math.max(0.5, (category.count / maxCount) * 100);
-    row.innerHTML = `
-      <span class="bar-name" title="${escapeHtml(category.label)}">${escapeHtml(category.label)}</span>
-      <span class="bar-track"><span class="bar-fill" style="width:${width}%;background:${category.color}"></span></span>
-      <span class="bar-count">${fmt.format(category.count)}</span>
-    `;
-    fragment.append(row);
-  });
-
-  els.bars.append(fragment);
-}
-
 function renderGeneTable() {
   const query = els.geneSearch.value.trim().toLowerCase();
   const genes = state.data.genes
@@ -550,37 +523,6 @@ function expressionColor(value, max) {
   const g = Math.round(236 - t * 184);
   const b = Math.round(220 - t * 66);
   return `rgb(${r},${g},${b})`;
-}
-
-function renderQcSummary() {
-  els.qcGrid.replaceChildren();
-  const labels = {
-    n_counts: "Molecule counts",
-    n_genes_by_counts: "Detected genes",
-    total_counts: "Total counts",
-  };
-  const fragment = document.createDocumentFragment();
-
-  Object.entries(state.data.qc || {}).forEach(([key, values]) => {
-    const card = document.createElement("article");
-    card.className = "qc-card";
-    const median = values.Median ?? values.median ?? 0;
-    const mean = values.Mean ?? values.mean ?? 0;
-    const min = values["Min."] ?? values.min ?? 0;
-    const max = values["Max."] ?? values.max ?? 0;
-    card.innerHTML = `
-      <strong>${escapeHtml(labels[key] || key)}</strong>
-      <div class="qc-stats">
-        <div><span>Median</span><br>${fmt.format(Math.round(median))}</div>
-        <div><span>Mean</span><br>${fmt.format(Math.round(mean))}</div>
-        <div><span>Min</span><br>${fmt.format(Math.round(min))}</div>
-        <div><span>Max</span><br>${fmt.format(Math.round(max))}</div>
-      </div>
-    `;
-    fragment.append(card);
-  });
-
-  els.qcGrid.append(fragment);
 }
 
 function showTooltip(event) {
