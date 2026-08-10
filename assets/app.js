@@ -2,8 +2,6 @@ const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json";
 
 const projectionMap = {
   spatial: { label: "Spatial map", x: 0, y: 1 },
-  umap: { label: "UMAP", x: 2, y: 3 },
-  slices: { label: "Library split", split: true },
 };
 
 const categoryLabels = {

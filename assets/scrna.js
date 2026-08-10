@@ -152,7 +152,7 @@ function embeddingIndices(name = scrnaState.embedding) {
 
 function renderEmbeddingCards() {
   scrnaEls.embeddingGrid.replaceChildren();
-  for (const name of scrnaState.data.metadata.embeddings) {
+  for (const name of scrnaState.data.metadata.embeddings.filter((embedding) => embedding === "umap")) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "scrna-embedding-card";
