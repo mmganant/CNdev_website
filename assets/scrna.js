@@ -4,7 +4,7 @@ const scrnaEls = {
   dataset: document.querySelector("#scrnaDataset"),
   colorBy: document.querySelector("#scrnaColorBy"),
   gene: document.querySelector("#scrnaGene"),
-  geneList: document.querySelector("#scrnaGeneList"),
+  geneResults: document.querySelector("#scrnaGeneResults"),
   embeddingGrid: document.querySelector("#scrnaEmbeddingGrid"),
   explorer: document.querySelector("#scrnaExplorer"),
   reset: document.querySelector("#scrnaReset"),
@@ -58,9 +58,14 @@ function bindScrnaEvents() {
     scrnaState.selected.clear();
     renderScrna();
   });
-  scrnaEls.gene.addEventListener("change", () => loadSparseGene(scrnaEls.gene.value));
+  scrnaEls.gene.addEventListener("input", () => renderGeneResults(scrnaEls.gene.value));
+  scrnaEls.gene.addEventListener("focus", () => renderGeneResults(scrnaEls.gene.value));
   scrnaEls.gene.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") loadSparseGene(scrnaEls.gene.value);
+    if (event.key === "Enter") {
+      const exact = scrnaState.geneLookup.get(scrnaEls.gene.value.trim().toLowerCase());
+      const first = scrnaEls.geneResults.querySelector("button[data-gene]")?.dataset.gene;
+      loadSparseGene(exact === undefined ? (first || scrnaEls.gene.value) : scrnaEls.gene.value);
+    }
   });
   scrnaEls.reset.addEventListener("click", () => {
     scrnaState.selected.clear();
@@ -103,14 +108,36 @@ async function loadScrnaDataset(id) {
   for (const field of Object.keys(scrnaState.data.annotations)) scrnaEls.colorBy.add(new Option(humanizeScrnaField(field), field));
   scrnaState.colorBy = scrnaEls.colorBy.value;
   scrnaEls.gene.value = "";
-  const options = document.createDocumentFragment();
-  for (const gene of scrnaState.countIndex.genes) options.append(new Option(gene, gene));
-  scrnaEls.geneList.replaceChildren(options);
+  scrnaEls.geneResults.replaceChildren();
+  scrnaEls.geneResults.hidden = true;
   scrnaEls.title.textContent = scrnaState.data.metadata.title;
   scrnaEls.stats.textContent = `${scrnaFmt.format(scrnaState.data.metadata.n_cells)} cells · ${scrnaFmt.format(scrnaState.countIndex.n_genes)} genes · ${scrnaState.data.metadata.source_file}`;
   renderEmbeddingCards();
   resizeScrnaCanvas();
   renderScrna();
+}
+
+function renderGeneResults(query) {
+  if (!scrnaState.countIndex) return;
+  const normalized = query.trim().toLowerCase();
+  const matches = scrnaState.countIndex.genes.filter((gene) => !normalized || gene.toLowerCase().includes(normalized));
+  const visible = matches.slice(0, 100);
+  scrnaEls.geneResults.replaceChildren();
+  const summary = document.createElement("div");
+  summary.className = "gene-search-summary";
+  summary.textContent = normalized
+    ? `${scrnaFmt.format(matches.length)} matching genes${matches.length > 100 ? " · refine to narrow" : ""}`
+    : `${scrnaFmt.format(matches.length)} genes · type to search`;
+  scrnaEls.geneResults.append(summary);
+  for (const gene of visible) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.gene = gene;
+    button.textContent = gene;
+    button.addEventListener("click", () => loadSparseGene(gene));
+    scrnaEls.geneResults.append(button);
+  }
+  scrnaEls.geneResults.hidden = false;
 }
 
 function humanizeScrnaField(field) {
@@ -207,6 +234,7 @@ async function loadSparseGene(requestedGene) {
   const max = nonzero[Math.min(nonzero.length - 1, Math.floor(nonzero.length * 0.99))] || 1;
   scrnaState.activeGene = { gene, values, max };
   scrnaEls.gene.value = gene;
+  scrnaEls.geneResults.hidden = true;
   scrnaEls.stats.textContent = `${scrnaFmt.format(scrnaState.data.metadata.n_cells)} cells · ${scrnaFmt.format(scrnaState.countIndex.n_genes)} genes · ${gene} counts`;
   renderScrna();
 }

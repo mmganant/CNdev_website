@@ -327,6 +327,46 @@ h3 {
   color: var(--soft-ink);
   font-size: 0.78rem;
   font-weight: 850;
+  position: relative;
+}
+
+.gene-search-results {
+  position: absolute;
+  z-index: 8;
+  top: 100%;
+  left: 0;
+  right: 0;
+  overflow: auto;
+  max-height: 18rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.gene-search-results button,
+.gene-search-summary {
+  display: block;
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.38rem 0.65rem;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  text-align: left;
+}
+
+.gene-search-results button:hover {
+  background: var(--mist);
+}
+
+.gene-search-summary {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--wash);
+  color: var(--muted);
+  font-size: 0.76rem;
 }
 
 .scrna-toolbar select {
