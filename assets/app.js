@@ -70,6 +70,10 @@ const state = {
   visible: new Uint8Array(),
   width: 0,
   height: 0,
+  countIndex: null,
+  geneLookup: new Map(),
+  activeGene: null,
+  shardCache: new Map(),
 };
 
 const ctx = els.canvas.getContext("2d", { alpha: true });
@@ -91,6 +95,11 @@ async function loadBarseqDataset(id) {
   const res = await fetch(entry.data_url);
   if (!res.ok) throw new Error(`Could not load ${entry.data_url}`);
   state.data = await res.json();
+  const countResponse = await fetch(entry.count_index_url);
+  if (!countResponse.ok) throw new Error(`Could not load ${entry.count_index_url}`);
+  state.countIndex = await countResponse.json();
+  state.geneLookup = new Map(state.countIndex.genes.map((gene, index) => [gene.toLowerCase(), index]));
+  state.activeGene = null;
   state.screenX = new Float32Array(state.data.cells.length);
   state.screenY = new Float32Array(state.data.cells.length);
   state.visible = new Uint8Array(state.data.cells.length);
@@ -132,6 +141,7 @@ function bindEvents() {
 
   els.colorBy.addEventListener("change", () => {
     state.colorBy = els.colorBy.value;
+    state.activeGene = null;
     state.selectedCodes.clear();
     renderAll();
   });
@@ -142,15 +152,21 @@ function bindEvents() {
   });
 
   els.resetFilters.addEventListener("click", () => {
+    state.activeGene = null;
+    els.geneSearch.value = "";
     state.selectedCodes.clear();
     renderAll();
   });
 
   els.geneSearch.addEventListener("input", renderGeneTable);
+  els.geneSearch.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") loadBarseqGene(els.geneSearch.value);
+  });
   els.markerChips.forEach((chip) => {
     chip.addEventListener("click", () => {
       els.geneSearch.value = chip.dataset.gene || chip.textContent.trim();
       renderGeneTable();
+      loadBarseqGene(els.geneSearch.value);
       document.querySelector("#explorer").scrollIntoView({ block: "start" });
       els.geneSearch.focus({ preventScroll: true });
     });
@@ -395,7 +411,8 @@ function drawPlot() {
     state.screenY[i] = y;
     const code = codeFor(cell);
     const category = categories[code] || {};
-    ctx.fillStyle = category.color || "#64748b";
+    const expression = state.activeGene?.values[i] || 0;
+    ctx.fillStyle = state.activeGene ? expressionColor(expression, state.activeGene.max) : (category.color || "#64748b");
     ctx.globalAlpha = activeCount ? 0.92 : 0.78;
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -409,6 +426,10 @@ function drawPlot() {
 
 function renderLegend() {
   els.legend.replaceChildren();
+  if (state.activeGene) {
+    els.legend.innerHTML = `<div class="gene-legend"><strong>${escapeHtml(state.activeGene.gene)}</strong><div class="gene-gradient"></div><div><span>0</span><span>${state.activeGene.max.toFixed(2)}</span></div><p>E11 counts, colored to the 99th percentile.</p></div>`;
+    return;
+  }
   const fragment = document.createDocumentFragment();
   getCategories().forEach((category, code) => {
     const button = document.createElement("button");
@@ -466,16 +487,71 @@ function renderGeneTable() {
 
   genes.forEach((gene) => {
     const row = document.createElement("tr");
+    row.tabIndex = 0;
+    row.title = `Plot ${gene.gene} expression`;
     row.innerHTML = `
       <td>${escapeHtml(gene.gene)}</td>
       <td>${fmt.format(gene.n_cells)}</td>
       <td>${Number(gene.mean_counts ?? gene.mean).toFixed(2)}</td>
       <td>${Number(gene.pct_dropout_by_counts).toFixed(1)}%</td>
     `;
+    row.addEventListener("click", () => loadBarseqGene(gene.gene));
+    row.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") loadBarseqGene(gene.gene);
+    });
     fragment.append(row);
   });
 
   els.geneTable.replaceChildren(fragment);
+}
+
+async function loadBarseqGene(requestedGene) {
+  const geneIndex = state.geneLookup.get(requestedGene.trim().toLowerCase());
+  if (geneIndex === undefined) return;
+  const gene = state.countIndex.genes[geneIndex];
+  const shard = state.countIndex.shards.find((item) => geneIndex >= item.start && geneIndex < item.start + item.count);
+  let buffer = state.shardCache.get(shard.file);
+  if (!buffer) {
+    const response = await fetch(`assets/data/barseq-counts/e11/${shard.file}`);
+    if (!response.ok) throw new Error(`Could not load counts for ${gene}`);
+    const stream = new Blob([await response.arrayBuffer()]).stream().pipeThrough(new DecompressionStream("gzip"));
+    buffer = await new Response(stream).arrayBuffer();
+    state.shardCache.set(shard.file, buffer);
+  }
+  const values = decodeGeneRecord(buffer, geneIndex - shard.start, state.countIndex.n_cells);
+  const nonzero = Array.from(values).filter((value) => value > 0).sort((a, b) => a - b);
+  const max = nonzero[Math.min(nonzero.length - 1, Math.floor(nonzero.length * 0.99))] || 1;
+  state.activeGene = { gene, values, max };
+  els.geneSearch.value = gene;
+  els.plotTitle.textContent = `${projectionMap[state.projection].label} · ${gene}`;
+  renderLegend();
+  drawPlot();
+}
+
+function decodeGeneRecord(buffer, targetRecord, cellCount) {
+  const view = new DataView(buffer);
+  const recordCount = view.getUint32(0, true);
+  let offset = 4;
+  for (let record = 0; record < recordCount; record += 1) {
+    const nnz = view.getUint32(offset, true); offset += 4;
+    if (record === targetRecord) {
+      const values = new Float32Array(cellCount);
+      const valueOffset = offset + nnz * 4;
+      for (let index = 0; index < nnz; index += 1) values[view.getUint32(offset + index * 4, true)] = view.getFloat32(valueOffset + index * 4, true);
+      return values;
+    }
+    offset += nnz * 8;
+  }
+  throw new Error("Gene record was not found");
+}
+
+function expressionColor(value, max) {
+  if (value <= 0) return "#dfe6e2";
+  const t = Math.min(1, value / max);
+  const r = Math.round(242 - t * 207);
+  const g = Math.round(236 - t * 184);
+  const b = Math.round(220 - t * 66);
+  return `rgb(${r},${g},${b})`;
 }
 
 function renderQcSummary() {

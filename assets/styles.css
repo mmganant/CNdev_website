@@ -356,6 +356,16 @@ h3 {
   text-align: left;
 }
 
+#geneTable tr {
+  cursor: pointer;
+}
+
+#geneTable tr:hover,
+#geneTable tr:focus {
+  background: var(--mist);
+  outline: none;
+}
+
 .gene-search-results button:hover {
   background: var(--mist);
 }
