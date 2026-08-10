@@ -1,4 +1,5 @@
 const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json";
+const PREVIEW_DATA_URL = "assets/data/barseq-previews.json";
 
 const projectionMap = {
   spatial: { label: "Spatial map", x: 0, y: 1 },
@@ -69,6 +70,8 @@ const state = {
   geneLookup: new Map(),
   activeGene: null,
   shardCache: new Map(),
+  countBaseUrl: null,
+  previews: {},
 };
 
 const ctx = els.canvas.getContext("2d", { alpha: true });
@@ -80,6 +83,8 @@ async function init() {
   const manifestResponse = await fetch(DATA_MANIFEST_URL);
   if (!manifestResponse.ok) throw new Error(`Could not load ${DATA_MANIFEST_URL}`);
   state.manifest = await manifestResponse.json();
+  const previewResponse = await fetch(PREVIEW_DATA_URL);
+  if (previewResponse.ok) state.previews = (await previewResponse.json()).datasets;
   bindEvents();
   await loadBarseqDataset(state.manifest.default);
 }
@@ -90,11 +95,26 @@ async function loadBarseqDataset(id) {
   const res = await fetch(entry.data_url);
   if (!res.ok) throw new Error(`Could not load ${entry.data_url}`);
   state.data = await res.json();
-  const countResponse = await fetch(entry.count_index_url);
-  if (!countResponse.ok) throw new Error(`Could not load ${entry.count_index_url}`);
-  state.countIndex = await countResponse.json();
-  state.geneLookup = new Map(state.countIndex.genes.map((gene, index) => [gene.toLowerCase(), index]));
+  els.colorBy.querySelectorAll("option").forEach((option) => {
+    option.disabled = !(state.data.annotations[option.value]?.length);
+  });
+  if (els.colorBy.selectedOptions[0]?.disabled) {
+    const available = [...els.colorBy.options].find((option) => !option.disabled);
+    if (available) els.colorBy.value = available.value;
+  }
+  state.colorBy = els.colorBy.value;
+  state.countIndex = null;
+  state.geneLookup = new Map();
+  state.countBaseUrl = null;
+  if (entry.count_index_url) {
+    const countResponse = await fetch(entry.count_index_url);
+    if (!countResponse.ok) throw new Error(`Could not load ${entry.count_index_url}`);
+    state.countIndex = await countResponse.json();
+    state.geneLookup = new Map(state.countIndex.genes.map((gene, index) => [gene.toLowerCase(), index]));
+    state.countBaseUrl = entry.count_index_url.replace(/index\.json$/, "");
+  }
   state.activeGene = null;
+  els.stageCanvases.forEach((canvas) => canvas.closest(".stage-card")?.classList.toggle("active", canvas.closest(".stage-card")?.dataset.stage === id));
   state.screenX = new Float32Array(state.data.cells.length);
   state.screenY = new Float32Array(state.data.cells.length);
   state.visible = new Uint8Array(state.data.cells.length);
@@ -204,9 +224,31 @@ function drawPreviewCanvases() {
   }
   els.stageCanvases.forEach((canvas) => {
     const card = canvas.closest(".stage-card");
-    const live = card?.classList.contains("live");
-    drawStaticPreview(canvas, live ? "spatial" : "slices", live ? "finer_cell_types" : "cell_types", live ? 1.35 : 1.6, !live);
+    const preview = state.previews[card?.dataset.stage];
+    if (preview) drawBarseqStagePreview(canvas, preview);
   });
+}
+
+function drawBarseqStagePreview(canvas, preview) {
+  const width = Math.max(220, Math.floor(canvas.getBoundingClientRect().width || 420));
+  const height = 180;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = width * dpr; canvas.height = height * dpr;
+  const context = canvas.getContext("2d");
+  context.setTransform(dpr, 0, 0, dpr, 0, 0);
+  context.fillStyle = "#fff"; context.fillRect(0, 0, width, height);
+  const xs = preview.cells.map((cell) => cell[0]), ys = preview.cells.map((cell) => cell[1]);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const xSpan = maxX - minX || 1, ySpan = maxY - minY || 1;
+  const scale = Math.min((width - 24) / xSpan, (height - 24) / ySpan);
+  for (const cell of preview.cells) {
+    const x = 12 + (width - 24 - xSpan * scale) / 2 + (cell[0] - minX) * scale;
+    const y = height - 12 - (height - 24 - ySpan * scale) / 2 - (cell[1] - minY) * scale;
+    context.fillStyle = preview.categories[cell[2]]?.color || "#64748b";
+    context.globalAlpha = 0.7;
+    context.fillRect(x, y, 1.5, 1.5);
+  }
+  context.globalAlpha = 1;
 }
 
 function drawStaticPreview(canvas, projection, colorBy, radius, muted) {
@@ -458,18 +500,22 @@ function renderGeneTable() {
 
   genes.forEach((gene) => {
     const row = document.createElement("tr");
-    row.tabIndex = 0;
-    row.title = `Plot ${gene.gene} expression`;
+    if (state.countIndex) {
+      row.tabIndex = 0;
+      row.title = `Plot ${gene.gene} expression`;
+    }
     row.innerHTML = `
       <td>${escapeHtml(gene.gene)}</td>
       <td>${fmt.format(gene.n_cells)}</td>
       <td>${Number(gene.mean_counts ?? gene.mean).toFixed(2)}</td>
       <td>${Number(gene.pct_dropout_by_counts).toFixed(1)}%</td>
     `;
-    row.addEventListener("click", () => loadBarseqGene(gene.gene));
-    row.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" || event.key === " ") loadBarseqGene(gene.gene);
-    });
+    if (state.countIndex) {
+      row.addEventListener("click", () => loadBarseqGene(gene.gene));
+      row.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") loadBarseqGene(gene.gene);
+      });
+    }
     fragment.append(row);
   });
 
@@ -483,7 +529,7 @@ async function loadBarseqGene(requestedGene) {
   const shard = state.countIndex.shards.find((item) => geneIndex >= item.start && geneIndex < item.start + item.count);
   let buffer = state.shardCache.get(shard.file);
   if (!buffer) {
-    const response = await fetch(`assets/data/barseq-counts/e11/${shard.file}`);
+    const response = await fetch(state.countBaseUrl + shard.file);
     if (!response.ok) throw new Error(`Could not load counts for ${gene}`);
     const stream = new Blob([await response.arrayBuffer()]).stream().pipeThrough(new DecompressionStream("gzip"));
     buffer = await new Response(stream).arrayBuffer();

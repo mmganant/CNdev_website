@@ -38,7 +38,7 @@ def export(source: Path, output: Path, matrix_path="layers/counts", genes_per_sh
             print(f"Wrote {filename} ({end}/{n_genes} genes)")
 
     index = {
-        "dataset": "e11",
+        "dataset": source.stem.replace("_", "-"),
         "source_file": source.name,
         "matrix": matrix_path,
         "encoding": "gzip-dense-records-v1",

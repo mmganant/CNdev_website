@@ -47,11 +47,15 @@ def rounded(value, digits=3):
     return round(value, digits) if np.isfinite(value) else None
 
 
+def safe_int(value):
+    return int(value) if np.isfinite(value) else 0
+
+
 def export(source, output, title):
     with h5py.File(source, "r") as handle:
-        umap = handle["obsm/X_umap"][:]
-        count = umap.shape[0]
         spatial = handle["obsm/spatial"][:]
+        count = spatial.shape[0]
+        umap = handle["obsm/X_umap"][:] if "obsm/X_umap" in handle else spatial
         generic = handle["obsm/generic"][:] if "obsm/generic" in handle else spatial
         spatial3d = handle["obsm/spatial3d"][:] if "obsm/spatial3d" in handle else np.column_stack((spatial, np.zeros(count)))
         categories = {}
@@ -75,13 +79,18 @@ def export(source, output, title):
         var_names = decode(handle["var/_index"][:])
         genes = []
         for index, gene in enumerate(var_names):
+            mean = handle["var/mean"][index] if "var/mean" in handle else 0
+            mean_counts = handle["var/mean_counts"][index] if "var/mean_counts" in handle else mean
+            n_cells = handle["var/n_cells"][index] if "var/n_cells" in handle else 0
+            total = handle["var/total_counts"][index] if "var/total_counts" in handle else 0
+            dropout = handle["var/pct_dropout_by_counts"][index] if "var/pct_dropout_by_counts" in handle else 0
             genes.append({
                 "gene": gene,
-                "mean": rounded(handle["var/mean"][index], 5),
-                "mean_counts": rounded(handle["var/mean_counts"][index], 5),
-                "n_cells": int(handle["var/n_cells"][index]),
-                "total_counts": int(handle["var/total_counts"][index]),
-                "pct_dropout_by_counts": rounded(handle["var/pct_dropout_by_counts"][index], 3),
+                "mean": rounded(mean, 5),
+                "mean_counts": rounded(mean_counts, 5),
+                "n_cells": safe_int(n_cells),
+                "total_counts": safe_int(total),
+                "pct_dropout_by_counts": rounded(dropout, 3),
             })
         genes.sort(key=lambda item: item["n_cells"], reverse=True)
 
