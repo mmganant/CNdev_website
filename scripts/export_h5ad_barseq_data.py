@@ -12,29 +12,37 @@ import numpy as np
 PALETTE = [
     "#2F80ED", "#F2994A", "#27AE60", "#EB5757", "#9B51E0", "#00A6A6",
     "#B7791F", "#D946EF", "#64748B", "#16A34A", "#E11D48", "#0891B2",
-    "#7C3AED", "#CA8A04", "#475569",
+    "#7C3AED", "#CA8A04", "#475569", "#F97316", "#14B8A6", "#8B5CF6",
 ]
-CATEGORY_FIELDS = [
-    "cell_types", "finer_cell_types", "leiden", "hybrid_leiden",
-    "library_id", "timepoint", "excitatory", "inhibitory",
-]
-
-
 def decode(values):
     return [value.decode("utf-8") if isinstance(value, bytes) else str(value) for value in values]
 
 
-def categorical(handle, field, count):
-    path = f"obs/{field}"
-    if path not in handle:
-        return [], np.full(count, -1, dtype=np.int32)
-    node = handle[path]
+def label_color(label):
+    value = 0
+    for byte in str(label).encode("utf-8"):
+        value = (value * 33 + byte) % 2147483647
+    return PALETTE[value % len(PALETTE)].lower()
+
+
+def metadata_column(node):
     if isinstance(node, h5py.Group) and "categories" in node and "codes" in node:
-        return decode(node["categories"][:]), node["codes"][:].astype(np.int32)
-    values = decode(node[:])
-    levels = list(dict.fromkeys(values))
-    lookup = {value: index for index, value in enumerate(levels)}
-    return levels, np.asarray([lookup[value] for value in values], dtype=np.int32)
+        levels = decode(node["categories"][:])
+        codes = node["codes"][:].astype(np.int32)
+        if len(levels) > 250:
+            try:
+                numeric_levels = np.asarray(levels, dtype=float)
+                return "numeric", None, np.asarray([numeric_levels[code] if code >= 0 else np.nan for code in codes])
+            except ValueError:
+                pass
+        return "annotation", levels, codes
+    values = node[:]
+    if values.dtype.kind in "SUO":
+        text = decode(values)
+        levels = list(dict.fromkeys(text))
+        lookup = {value: index for index, value in enumerate(levels)}
+        return "annotation", levels, np.asarray([lookup[value] for value in text], dtype=np.int32)
+    return "numeric", None, values.astype(float)
 
 
 def numeric(handle, field, count):
@@ -58,18 +66,18 @@ def export(source, output, title):
         umap = handle["obsm/X_umap"][:] if "obsm/X_umap" in handle else spatial
         generic = handle["obsm/generic"][:] if "obsm/generic" in handle else spatial
         spatial3d = handle["obsm/spatial3d"][:] if "obsm/spatial3d" in handle else np.column_stack((spatial, np.zeros(count)))
-        categories = {}
-        codes = {}
-        for field in CATEGORY_FIELDS:
-            levels, field_codes = categorical(handle, field, count)
-            codes[field] = field_codes
-            colors_path = f"uns/{field}_colors"
-            colors = decode(handle[colors_path][:]) if colors_path in handle else []
-            if len(colors) != len(levels):
-                colors = [PALETTE[index % len(PALETTE)] for index in range(len(levels))]
-            counts = np.bincount(field_codes[field_codes >= 0], minlength=len(levels)) if levels else []
+        categories, codes, numeric_metadata = {}, {}, {}
+        for field in handle["obs"].keys():
+            if field == "_index":
+                continue
+            kind, levels, values = metadata_column(handle[f"obs/{field}"])
+            if kind == "numeric":
+                numeric_metadata[field] = values
+                continue
+            codes[field] = values
+            counts = np.bincount(values[values >= 0], minlength=len(levels)) if levels else []
             categories[field] = [
-                {"label": label, "count": int(counts[index]), "color": colors[index]}
+                {"label": label, "count": int(counts[index]), "color": label_color(label)}
                 for index, label in enumerate(levels)
             ]
 
@@ -104,11 +112,7 @@ def export(source, output, title):
                 "layers": list(handle.get("layers", {}).keys()),
                 "embeddings": list(handle["obsm"].keys()),
             },
-            "schema": [
-                "spatial_x", "spatial_y", "umap_x", "umap_y", "generic_x", "generic_y",
-                "spatial3d_x", "spatial3d_y", "spatial3d_z", *CATEGORY_FIELDS,
-                "n_counts", "n_genes_by_counts", "total_counts",
-            ],
+            "schema": ["spatial_x", "spatial_y", *codes.keys(), *numeric_metadata.keys()],
             "annotations": categories,
             "genes": genes,
             "qc": {
@@ -121,11 +125,8 @@ def export(source, output, title):
         for index in range(count):
             payload["cells"].append([
                 rounded(spatial[index, 0]), rounded(spatial[index, 1]),
-                rounded(umap[index, 0]), rounded(umap[index, 1]),
-                rounded(generic[index, 0]), rounded(generic[index, 1]),
-                rounded(spatial3d[index, 0]), rounded(spatial3d[index, 1]), rounded(spatial3d[index, 2]),
-                *[int(codes[field][index]) for field in CATEGORY_FIELDS],
-                rounded(n_counts[index], 2), rounded(n_genes[index], 2), rounded(total_counts[index], 2),
+                *[int(values[index]) for values in codes.values()],
+                *[rounded(values[index], 4) for values in numeric_metadata.values()],
             ])
 
     output.parent.mkdir(parents=True, exist_ok=True)

@@ -16,20 +16,6 @@ const categoryLabels = {
   inhibitory: "Inhibitory program",
 };
 
-const schema = {
-  cell_types: 9,
-  finer_cell_types: 10,
-  leiden: 11,
-  hybrid_leiden: 12,
-  library_id: 13,
-  timepoint: 14,
-  excitatory: 15,
-  inhibitory: 16,
-  n_counts: 17,
-  n_genes_by_counts: 18,
-  total_counts: 19,
-};
-
 const els = {
   canvas: document.querySelector("#atlasCanvas"),
   tooltip: document.querySelector("#tooltip"),
@@ -72,10 +58,15 @@ const state = {
   shardCache: new Map(),
   countBaseUrl: null,
   previews: {},
+  schema: {},
 };
 
 const ctx = els.canvas.getContext("2d", { alpha: true });
 const fmt = new Intl.NumberFormat("en-US");
+
+function humanizeField(field) {
+  return field.replace(/[._]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
 
 init();
 
@@ -95,13 +86,12 @@ async function loadBarseqDataset(id) {
   const res = await fetch(entry.data_url);
   if (!res.ok) throw new Error(`Could not load ${entry.data_url}`);
   state.data = await res.json();
-  els.colorBy.querySelectorAll("option").forEach((option) => {
-    option.disabled = !(state.data.annotations[option.value]?.length);
-  });
-  if (els.colorBy.selectedOptions[0]?.disabled) {
-    const available = [...els.colorBy.options].find((option) => !option.disabled);
-    if (available) els.colorBy.value = available.value;
-  }
+  state.schema = Object.fromEntries(state.data.schema.map((field, index) => [field, index]));
+  els.colorBy.replaceChildren();
+  const annotationFields = Object.keys(state.data.annotations);
+  for (const field of annotationFields) els.colorBy.add(new Option(humanizeField(field), field));
+  const preferredField = annotationFields.includes("finer_cell_types") ? "finer_cell_types" : annotationFields[0];
+  els.colorBy.value = preferredField;
   state.colorBy = els.colorBy.value;
   state.countIndex = null;
   state.geneLookup = new Map();
@@ -303,7 +293,7 @@ function drawStaticPreview(canvas, projection, colorBy, radius, muted) {
     if (!Number.isFinite(xVal) || !Number.isFinite(yVal)) continue;
     const x = offsetX + (xVal - bounds.minX) * scale;
     const y = height - offsetY - (yVal - bounds.minY) * scale;
-    const code = cell[schema[colorBy]];
+    const code = cell[state.schema[colorBy]];
     const color = categories[code]?.color || "#64748b";
     previewCtx.globalAlpha = muted ? 0.2 : 0.78;
     previewCtx.fillStyle = muted ? "#788590" : color;
@@ -319,7 +309,7 @@ function getCategories(field = state.colorBy) {
 }
 
 function codeFor(cell, field = state.colorBy) {
-  return cell[schema[field]];
+  return cell[state.schema[field]];
 }
 
 function isVisible(cell) {
