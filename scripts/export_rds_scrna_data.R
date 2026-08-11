@@ -6,25 +6,23 @@ args <- commandArgs(trailingOnly = TRUE)
 source_dir <- if (length(args) >= 1) args[[1]] else "data/scrna-source"
 out_dir <- if (length(args) >= 2) args[[2]] else "assets/data/scrna"
 dataset_filter <- if (length(args) >= 3) args[[3]] else NULL
+url_override <- if (length(args) >= 4) args[[4]] else NULL
 
 datasets <- list(
   list(
     file = "URL.rds",
     slug = "url",
-    title = "URL integrated atlas",
-    fields = c("fine_cell_type", "cell_type", "cell_type_vague", "TimePoint", "Sample", "branch", "DCN_status")
+    title = "URL integrated atlas"
   ),
   list(
     file = "all_inhib.rds",
     slug = "all-inhib",
-    title = "Integrated inhibitory atlas",
-    fields = c("cellType", "precisest_label", "broad_lineage", "dev_state", "species", "stage", "timepoint", "dataset", "Age", "cluster")
+    title = "Integrated inhibitory atlas"
   ),
   list(
     file = "combined_alltp08_2026.rds",
     slug = "combined-alltp08-2026",
-    title = "Combined developmental atlas",
-    fields = c("final.clusters2", "classes", "cell_type", "fine_cell_type", "TimePoint", "med_2p_branch_final", "RL_subcluster_named")
+    title = "Combined developmental atlas"
   )
 )
 if (!is.null(dataset_filter)) {
@@ -39,6 +37,13 @@ palette <- c(
 )
 
 gene_panel <- character()
+
+label_color <- function(label) {
+  bytes <- utf8ToInt(enc2utf8(as.character(label)))
+  hash <- 0
+  for (byte in bytes) hash <- (hash * 33 + byte) %% 2147483647
+  palette[(hash %% length(palette)) + 1L]
+}
 
 clean_number <- function(x, digits = 3) {
   out <- round(as.numeric(x), digits)
@@ -129,6 +134,7 @@ expression_matrix <- function(slots) {
 
 extract_dataset <- function(spec) {
   source_file <- file.path(source_dir, spec$file)
+  if (identical(spec$slug, "url") && !is.null(url_override)) source_file <- url_override
   if (!file.exists(source_file)) stop("Source RDS file was not found: ", source_file)
 
   message("Reading ", source_file)
@@ -145,16 +151,16 @@ extract_dataset <- function(spec) {
     stop("UMAP dimensions do not match metadata in ", spec$file)
   }
 
-  fields <- spec$fields[spec$fields %in% names(metadata)]
+  all_fields <- names(metadata)
+  is_annotation <- vapply(metadata, function(column) {
+    !is.numeric(column) || length(unique(column)) <= 250L
+  }, logical(1))
+  fields <- all_fields[is_annotation]
+  numeric_fields <- all_fields[!is_annotation]
   embedding_names <- names(reductions)[vapply(reductions, function(reduction) {
     matrix <- attributes(reduction)[["cell.embeddings"]]
     !is.null(matrix) && nrow(matrix) == nrow(metadata) && ncol(matrix) >= 2
   }, logical(1))]
-  extra_embedding_names <- setdiff(embedding_names, "umap")
-  extra_embeddings <- lapply(extra_embedding_names, function(name) {
-    attributes(reductions[[name]])[["cell.embeddings"]][, 1:2, drop = FALSE]
-  })
-  names(extra_embeddings) <- extra_embedding_names
   annotations <- list()
   codes <- list()
   for (field in fields) {
@@ -166,25 +172,17 @@ extract_dataset <- function(spec) {
     annotations[[field]] <- data.frame(
       label = levels,
       count = as.integer(counts),
-      color = rep(palette, length.out = length(levels)),
+      color = vapply(levels, label_color, character(1)),
       stringsAsFactors = FALSE
     )
     codes[[field]] <- field_codes
   }
 
-  qc_fields <- c("nCount_RNA", "nFeature_RNA", "percent.mito", "percent.mt")
-  qc_fields <- qc_fields[qc_fields %in% names(metadata)]
-  extra_embedding_schema <- unlist(lapply(extra_embedding_names, function(name) {
-    c(paste0("embedding_", name, "_x"), paste0("embedding_", name, "_y"))
-  }), use.names = FALSE)
-  schema <- c("umap_x", "umap_y", extra_embedding_schema, fields, qc_fields)
+  schema <- c("umap_x", "umap_y", fields, numeric_fields)
   columns <- c(
     list(clean_number(embedding[, 1]), clean_number(embedding[, 2])),
-    unlist(lapply(extra_embeddings, function(matrix) {
-      list(clean_number(matrix[, 1]), clean_number(matrix[, 2]))
-    }), recursive = FALSE),
     unname(codes),
-    lapply(qc_fields, function(field) clean_number(metadata[[field]], 2))
+    lapply(numeric_fields, function(field) clean_number(metadata[[field]], 4))
   )
   cells <- lapply(seq_len(nrow(metadata)), function(i) {
     unname(vapply(columns, function(column) column[[i]], numeric(1)))
@@ -221,7 +219,7 @@ extract_dataset <- function(spec) {
       generated_at = format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z"),
       n_cells = nrow(metadata),
       assays = assays,
-      embeddings = embedding_names,
+      embeddings = "umap",
       count_index_url = paste0("assets/data/scrna-counts/", spec$slug, "/index.json")
     ),
     schema = schema,
