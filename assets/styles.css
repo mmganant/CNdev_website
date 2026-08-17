@@ -1085,3 +1085,332 @@ th:not(:first-child) {
     grid-template-columns: minmax(5rem, 8rem) minmax(6rem, 1fr) 3.6rem;
   }
 }
+
+/* Refined atlas presentation */
+:root {
+  --ink: #16231e;
+  --soft-ink: #45544d;
+  --muted: #718079;
+  --line: #d9e5df;
+  --paper: #ffffff;
+  --wash: #f5f9f7;
+  --mist: #eaf4ef;
+  --leaf: #19724f;
+  --leaf-dark: #10573d;
+  --shadow: 0 18px 50px rgba(22, 49, 37, 0.10);
+  --shadow-soft: 0 8px 28px rgba(22, 49, 37, 0.07);
+}
+
+body {
+  background:
+    radial-gradient(circle at 8% 4%, rgba(35, 142, 101, 0.13), transparent 30rem),
+    radial-gradient(circle at 93% 24%, rgba(49, 95, 157, 0.08), transparent 27rem),
+    #f8fbf9;
+}
+
+.navbar {
+  min-height: 4.6rem;
+  padding-inline: clamp(1rem, 4vw, 4rem);
+  background: rgba(250, 252, 251, 0.88);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+
+.brand-mark {
+  width: 2.6rem;
+  height: 2.6rem;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(145deg, var(--leaf), #2d9570);
+  box-shadow: 0 7px 18px rgba(25, 114, 79, 0.24);
+  color: white;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 0.92rem;
+}
+
+.brand-copy {
+  display: grid;
+  line-height: 1.15;
+}
+
+.brand-copy strong {
+  font-size: 0.92rem;
+}
+
+.brand-copy small {
+  margin-top: 0.18rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.035em;
+}
+
+.nav-links a {
+  position: relative;
+  padding: 0.45rem 0.1rem;
+}
+
+.nav-links a::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--leaf);
+  content: "";
+  transform: scaleX(0);
+  transition: transform 0.2s ease;
+}
+
+.nav-links a:hover::after {
+  transform: scaleX(1);
+}
+
+.hero {
+  max-width: 1500px;
+  min-height: min(52rem, calc(100vh - 4.6rem));
+  margin: 0 auto;
+  padding-top: clamp(3.5rem, 7vw, 7rem);
+  padding-bottom: clamp(4rem, 7vw, 7rem);
+}
+
+.eyebrow {
+  margin-bottom: 0.7rem;
+  letter-spacing: 0.12em;
+}
+
+h1 {
+  max-width: 12ch;
+  font-size: clamp(3.25rem, 6vw, 6.4rem);
+  letter-spacing: -0.045em;
+}
+
+h2 {
+  letter-spacing: -0.025em;
+}
+
+.hero-copy p:not(.eyebrow) {
+  max-width: 42rem;
+  color: #50615a;
+  font-size: clamp(1.05rem, 1.5vw, 1.2rem);
+  line-height: 1.7;
+}
+
+.button,
+button {
+  border-radius: 10px;
+}
+
+.button {
+  min-height: 3rem;
+  padding-inline: 1.15rem;
+}
+
+.button.primary {
+  background: linear-gradient(135deg, var(--leaf), #268a66);
+  box-shadow: 0 9px 22px rgba(25, 114, 79, 0.2);
+}
+
+.button.secondary {
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow: var(--shadow-soft);
+}
+
+.hero-figure {
+  border-color: rgba(25, 114, 79, 0.16);
+  border-radius: 24px;
+  box-shadow: 0 30px 80px rgba(26, 62, 46, 0.16);
+  transform: rotate(0.6deg);
+}
+
+.hero-figure figcaption {
+  padding: 1rem 1.2rem;
+  background: linear-gradient(90deg, #f1f8f4, #f8fbf9);
+  line-height: 1.5;
+}
+
+.section {
+  padding-block: clamp(4.5rem, 8vw, 7.5rem);
+}
+
+.spatial-band {
+  background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(241,247,244,0.9));
+}
+
+.singlecell-band {
+  background: linear-gradient(180deg, #f8fbf9, #f1f6f4);
+}
+
+.section-title,
+.singlecell-intro {
+  margin-bottom: 2.2rem;
+}
+
+.section-title > p:not(.eyebrow),
+.singlecell-intro > p:not(.eyebrow) {
+  max-width: 48rem;
+  color: var(--soft-ink);
+  font-size: 1.02rem;
+}
+
+.stage-grid {
+  gap: 1rem;
+}
+
+.stage-card,
+.scrna-embedding-card {
+  border-color: rgba(40, 85, 65, 0.14);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.stage-card:hover,
+.scrna-embedding-card:hover {
+  border-color: rgba(25, 114, 79, 0.42);
+  box-shadow: 0 18px 42px rgba(22, 49, 37, 0.14);
+  transform: translateY(-4px);
+}
+
+.stage-card.active,
+.scrna-embedding-card.active {
+  border-color: var(--leaf);
+  box-shadow: 0 0 0 3px rgba(25, 114, 79, 0.12), var(--shadow-soft);
+}
+
+.stage-card canvas,
+.scrna-embedding-card canvas {
+  background: radial-gradient(circle, #fff, #f4f8f6);
+}
+
+.stage-card span,
+.scrna-embedding-card span {
+  padding: 0.9rem 1rem;
+  background: white;
+  font-size: 0.92rem;
+}
+
+.scrna-explorer,
+.controls,
+.viewer,
+.panel {
+  border-color: rgba(40, 85, 65, 0.14);
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+}
+
+.scrna-toolbar {
+  padding: 1.15rem;
+  background: linear-gradient(90deg, #f2f8f5, #f8fbf9);
+}
+
+select,
+input[type="search"],
+.scrna-toolbar select,
+.scrna-toolbar input[type="search"] {
+  min-height: 2.7rem;
+  border-radius: 10px;
+  background-color: white;
+}
+
+select:focus,
+input:focus,
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(25, 114, 79, 0.2);
+  outline-offset: 2px;
+}
+
+.scrna-summary,
+.viewer-head {
+  padding: 1.05rem 1.2rem;
+  background: rgba(255,255,255,0.94);
+}
+
+.explorer-section {
+  padding-block: clamp(4.5rem, 8vw, 7rem);
+  background: #eef5f1;
+}
+
+.stats {
+  gap: 0.7rem;
+}
+
+.stats div {
+  min-width: 6.2rem;
+  padding: 0.8rem 0.9rem;
+  border-color: rgba(40, 85, 65, 0.13);
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+}
+
+.stats dd {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.3rem;
+}
+
+.app-shell {
+  gap: 1.2rem;
+}
+
+.controls {
+  padding: 1.2rem;
+}
+
+.legend-item {
+  border-radius: 9px;
+  transition: background 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
+}
+
+.legend-item:hover {
+  background: var(--wash);
+  transform: translateX(2px);
+}
+
+.canvas-wrap {
+  background:
+    linear-gradient(rgba(224, 235, 229, 0.55) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(224, 235, 229, 0.55) 1px, transparent 1px),
+    radial-gradient(circle at center, #ffffff, #f8fbf9);
+  background-size: 56px 56px, 56px 56px, auto;
+}
+
+.lower-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.panel {
+  padding: 1.05rem;
+}
+
+th {
+  padding-block: 0.7rem;
+  background: #f6f9f7;
+  letter-spacing: 0.04em;
+}
+
+td {
+  padding-block: 0.62rem;
+}
+
+#geneTable tr {
+  transition: background 0.14s ease;
+}
+
+.footer {
+  padding: 1.6rem;
+  border-top: 1px solid var(--line);
+  background: #162b23;
+  color: #dce9e3;
+}
+
+.footer a,
+.footer span {
+  color: inherit;
+}
+
+@media (max-width: 680px) {
+  .brand-copy small { display: none; }
+  .hero-figure { transform: none; }
+  h1 { font-size: clamp(2.75rem, 15vw, 4.2rem); }
+}
