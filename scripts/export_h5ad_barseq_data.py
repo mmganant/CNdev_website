@@ -19,6 +19,8 @@ def decode(values):
 
 
 def label_color(label):
+    if str(label).strip().lower() in {"na", "n/a", "nan", "none", "null", "not available", "missing", "unknown", "unassigned"}:
+        return "#9aa39f"
     value = 0
     for byte in str(label).encode("utf-8"):
         value = (value * 33 + byte) % 2147483647

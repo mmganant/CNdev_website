@@ -39,6 +39,8 @@ palette <- c(
 gene_panel <- character()
 
 label_color <- function(label) {
+  missing_labels <- c("na", "n/a", "nan", "none", "null", "not available", "missing", "unknown", "unassigned")
+  if (tolower(trimws(as.character(label))) %in% missing_labels) return("#9aa39f")
   bytes <- utf8ToInt(enc2utf8(as.character(label)))
   hash <- 0
   for (byte in bytes) hash <- (hash * 33 + byte) %% 2147483647
