@@ -21,6 +21,8 @@ const ATLAS_COLOR_OVERRIDES = new Map([
   ["i2/3", "#2ca25f"],
   ["i2", "#2ca25f"],
   ["i3", "#2ca25f"],
+  ["other", "#d9dedb"],
+  ["others", "#d9dedb"],
 ]);
 
 function atlasColorForLabel(label) {
@@ -92,6 +94,7 @@ const state = {
   countBaseUrl: null,
   previews: {},
   schema: {},
+  datasetId: null,
 };
 
 const ctx = els.canvas.getContext("2d", { alpha: true });
@@ -119,6 +122,7 @@ async function loadBarseqDataset(id) {
   const res = await fetch(entry.data_url);
   if (!res.ok) throw new Error(`Could not load ${entry.data_url}`);
   state.data = await res.json();
+  state.datasetId = id;
   applyAtlasColorOverrides(state.data.annotations);
   state.schema = Object.fromEntries(state.data.schema.map((field, index) => [field, index]));
   els.colorBy.replaceChildren();
@@ -249,11 +253,15 @@ function drawPreviewCanvases() {
   els.stageCanvases.forEach((canvas) => {
     const card = canvas.closest(".stage-card");
     const preview = state.previews[card?.dataset.stage];
-    if (preview) drawBarseqStagePreview(canvas, preview);
+    if (preview) drawBarseqStagePreview(canvas, preview, card.dataset.stage);
   });
 }
 
-function drawBarseqStagePreview(canvas, preview) {
+function shouldSwitchBarseqYAxis(datasetId) {
+  return !["E15", "E17"].includes(datasetId);
+}
+
+function drawBarseqStagePreview(canvas, preview, datasetId) {
   const width = Math.max(220, Math.floor(canvas.getBoundingClientRect().width || 420));
   const height = 180;
   const dpr = window.devicePixelRatio || 1;
@@ -267,7 +275,10 @@ function drawBarseqStagePreview(canvas, preview) {
   const scale = Math.min((width - 24) / xSpan, (height - 24) / ySpan);
   for (const cell of preview.cells) {
     const x = 12 + (width - 24 - xSpan * scale) / 2 + (cell[0] - minX) * scale;
-    const y = height - 12 - (height - 24 - ySpan * scale) / 2 - (cell[1] - minY) * scale;
+    const yOffset = 12 + (height - 24 - ySpan * scale) / 2;
+    const y = shouldSwitchBarseqYAxis(datasetId)
+      ? yOffset + (cell[1] - minY) * scale
+      : height - yOffset - (cell[1] - minY) * scale;
     const category = preview.categories[cell[2]];
     context.fillStyle = atlasColorForLabel(category?.label) || category?.color || "#64748b";
     context.globalAlpha = 0.7;
@@ -327,7 +338,9 @@ function drawStaticPreview(canvas, projection, colorBy, radius, muted) {
     const [xVal, yVal] = point;
     if (!Number.isFinite(xVal) || !Number.isFinite(yVal)) continue;
     const x = offsetX + (xVal - bounds.minX) * scale;
-    const y = height - offsetY - (yVal - bounds.minY) * scale;
+    const y = shouldSwitchBarseqYAxis(state.datasetId)
+      ? offsetY + (yVal - bounds.minY) * scale
+      : height - offsetY - (yVal - bounds.minY) * scale;
     const code = cell[state.schema[colorBy]];
     const color = categories[code]?.color || "#64748b";
     previewCtx.globalAlpha = muted ? 0.2 : 0.78;
@@ -441,7 +454,9 @@ function projectPoint(cell, bounds) {
   const offsetY = pad + (usableH - plotH) / 2;
   const point = coordinateFor(cell);
   const x = offsetX + (point[0] - bounds.minX) * scale;
-  const y = state.height - offsetY - (point[1] - bounds.minY) * scale;
+  const y = shouldSwitchBarseqYAxis(state.datasetId)
+    ? offsetY + (point[1] - bounds.minY) * scale
+    : state.height - offsetY - (point[1] - bounds.minY) * scale;
   return [x, y];
 }
 

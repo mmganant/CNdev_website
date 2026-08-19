@@ -48,7 +48,8 @@ label_color <- function(label) {
     "early medial"="#8c564b", "medlate"="#377eb8", "med late"="#377eb8",
     "late medial"="#377eb8", "rl"="#78cbe6", "vz"="#78cbe6",
     "int/lat prog"="#f2c94c", "int+latprog"="#f2c94c", "i1"="#f28e2b",
-    "i2/3"="#2ca25f", "i2"="#2ca25f", "i3"="#2ca25f"
+    "i2/3"="#2ca25f", "i2"="#2ca25f", "i3"="#2ca25f",
+    "other"="#d9dedb", "others"="#d9dedb"
   )
   if (key %in% names(overrides)) return(unname(overrides[[key]]))
   bytes <- utf8ToInt(enc2utf8(as.character(label)))

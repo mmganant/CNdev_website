@@ -8,6 +8,7 @@ const SCRNA_COLOR_OVERRIDES = new Map([
   ["rl", "#78cbe6"], ["vz", "#78cbe6"],
   ["int/lat prog", "#f2c94c"], ["int+latprog", "#f2c94c"],
   ["i1", "#f28e2b"], ["i2/3", "#2ca25f"], ["i2", "#2ca25f"], ["i3", "#2ca25f"],
+  ["other", "#d9dedb"], ["others", "#d9dedb"],
 ]);
 
 function applyScrnaColorOverrides(annotations) {
