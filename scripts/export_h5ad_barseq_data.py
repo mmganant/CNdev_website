@@ -19,8 +19,19 @@ def decode(values):
 
 
 def label_color(label):
-    if str(label).strip().lower() in {"na", "n/a", "nan", "none", "null", "not available", "missing", "unknown", "unassigned"}:
+    key = " ".join(str(label).strip().lower().replace("_", " ").split())
+    if key in {"na", "n/a", "nan", "none", "null", "not available", "missing", "unknown", "unassigned"}:
         return "#9aa39f"
+    overrides = {
+        "extracerebellar-fated": "#111111", "intp": "#2ca25f", "inta/lat": "#f28e2b",
+        "inta": "#e76f9a", "lat": "#d62728", "medearly": "#8c564b", "med early": "#8c564b",
+        "early medial": "#8c564b", "medlate": "#377eb8", "med late": "#377eb8",
+        "late medial": "#377eb8", "rl": "#78cbe6", "vz": "#78cbe6",
+        "int/lat prog": "#f2c94c", "int+latprog": "#f2c94c", "i1": "#f28e2b",
+        "i2/3": "#2ca25f", "i2": "#2ca25f", "i3": "#2ca25f",
+    }
+    if key in overrides:
+        return overrides[key]
     value = 0
     for byte in str(label).encode("utf-8"):
         value = (value * 33 + byte) % 2147483647

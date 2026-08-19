@@ -1,6 +1,39 @@
 const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json";
 const PREVIEW_DATA_URL = "assets/data/barseq-previews.json";
 
+const ATLAS_COLOR_OVERRIDES = new Map([
+  ["extracerebellar-fated", "#111111"],
+  ["intp", "#2ca25f"],
+  ["inta/lat", "#f28e2b"],
+  ["inta", "#e76f9a"],
+  ["lat", "#d62728"],
+  ["medearly", "#8c564b"],
+  ["med early", "#8c564b"],
+  ["early medial", "#8c564b"],
+  ["medlate", "#377eb8"],
+  ["med late", "#377eb8"],
+  ["late medial", "#377eb8"],
+  ["rl", "#78cbe6"],
+  ["vz", "#78cbe6"],
+  ["int/lat prog", "#f2c94c"],
+  ["int+latprog", "#f2c94c"],
+  ["i1", "#f28e2b"],
+  ["i2/3", "#2ca25f"],
+  ["i2", "#2ca25f"],
+  ["i3", "#2ca25f"],
+]);
+
+function atlasColorForLabel(label) {
+  const key = String(label).trim().toLowerCase().replace(/_/g, " ").replace(/\s+/g, " ");
+  return ATLAS_COLOR_OVERRIDES.get(key);
+}
+
+function applyAtlasColorOverrides(annotations) {
+  for (const rows of Object.values(annotations || {})) {
+    for (const row of rows) row.color = atlasColorForLabel(row.label) || row.color;
+  }
+}
+
 const projectionMap = {
   spatial: { label: "Spatial map", x: 0, y: 1 },
 };
@@ -86,6 +119,7 @@ async function loadBarseqDataset(id) {
   const res = await fetch(entry.data_url);
   if (!res.ok) throw new Error(`Could not load ${entry.data_url}`);
   state.data = await res.json();
+  applyAtlasColorOverrides(state.data.annotations);
   state.schema = Object.fromEntries(state.data.schema.map((field, index) => [field, index]));
   els.colorBy.replaceChildren();
   const annotationFields = Object.keys(state.data.annotations);
@@ -234,7 +268,8 @@ function drawBarseqStagePreview(canvas, preview) {
   for (const cell of preview.cells) {
     const x = 12 + (width - 24 - xSpan * scale) / 2 + (cell[0] - minX) * scale;
     const y = height - 12 - (height - 24 - ySpan * scale) / 2 - (cell[1] - minY) * scale;
-    context.fillStyle = preview.categories[cell[2]]?.color || "#64748b";
+    const category = preview.categories[cell[2]];
+    context.fillStyle = atlasColorForLabel(category?.label) || category?.color || "#64748b";
     context.globalAlpha = 0.7;
     context.fillRect(x, y, 1.5, 1.5);
   }

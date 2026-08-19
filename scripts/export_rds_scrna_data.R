@@ -40,7 +40,17 @@ gene_panel <- character()
 
 label_color <- function(label) {
   missing_labels <- c("na", "n/a", "nan", "none", "null", "not available", "missing", "unknown", "unassigned")
-  if (tolower(trimws(as.character(label))) %in% missing_labels) return("#9aa39f")
+  key <- gsub("\\s+", " ", gsub("_", " ", tolower(trimws(as.character(label)))))
+  if (key %in% missing_labels) return("#9aa39f")
+  overrides <- c(
+    "extracerebellar-fated"="#111111", "intp"="#2ca25f", "inta/lat"="#f28e2b",
+    "inta"="#e76f9a", "lat"="#d62728", "medearly"="#8c564b", "med early"="#8c564b",
+    "early medial"="#8c564b", "medlate"="#377eb8", "med late"="#377eb8",
+    "late medial"="#377eb8", "rl"="#78cbe6", "vz"="#78cbe6",
+    "int/lat prog"="#f2c94c", "int+latprog"="#f2c94c", "i1"="#f28e2b",
+    "i2/3"="#2ca25f", "i2"="#2ca25f", "i3"="#2ca25f"
+  )
+  if (key %in% names(overrides)) return(unname(overrides[[key]]))
   bytes <- utf8ToInt(enc2utf8(as.character(label)))
   hash <- 0
   for (byte in bytes) hash <- (hash * 33 + byte) %% 2147483647

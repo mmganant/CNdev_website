@@ -1,5 +1,24 @@
 const SCRNA_MANIFEST_URL = "assets/data/scrna/manifest.json";
 
+const SCRNA_COLOR_OVERRIDES = new Map([
+  ["extracerebellar-fated", "#111111"], ["intp", "#2ca25f"],
+  ["inta/lat", "#f28e2b"], ["inta", "#e76f9a"], ["lat", "#d62728"],
+  ["medearly", "#8c564b"], ["med early", "#8c564b"], ["early medial", "#8c564b"],
+  ["medlate", "#377eb8"], ["med late", "#377eb8"], ["late medial", "#377eb8"],
+  ["rl", "#78cbe6"], ["vz", "#78cbe6"],
+  ["int/lat prog", "#f2c94c"], ["int+latprog", "#f2c94c"],
+  ["i1", "#f28e2b"], ["i2/3", "#2ca25f"], ["i2", "#2ca25f"], ["i3", "#2ca25f"],
+]);
+
+function applyScrnaColorOverrides(annotations) {
+  for (const rows of Object.values(annotations || {})) {
+    for (const row of rows) {
+      const key = String(row.label).trim().toLowerCase().replace(/_/g, " ").replace(/\s+/g, " ");
+      row.color = SCRNA_COLOR_OVERRIDES.get(key) || row.color;
+    }
+  }
+}
+
 const scrnaEls = {
   dataset: document.querySelector("#scrnaDataset"),
   colorBy: document.querySelector("#scrnaColorBy"),
@@ -96,6 +115,7 @@ async function loadScrnaDataset(id) {
     const response = await fetch(entry.data_url);
     if (!response.ok) throw new Error(`Could not load ${entry.data_url}`);
     scrnaState.data = await response.json();
+    applyScrnaColorOverrides(scrnaState.data.annotations);
     scrnaState.dataCache.set(id, scrnaState.data);
   }
   const countResponse = await fetch(scrnaState.data.metadata.count_index_url);
@@ -163,6 +183,7 @@ async function renderEmbeddingCards() {
       const response = await fetch(dataset.data_url);
       if (!response.ok) continue;
       data = await response.json();
+      applyScrnaColorOverrides(data.annotations);
       scrnaState.dataCache.set(dataset.id, data);
     }
     if (!data.metadata.embeddings.includes("umap")) continue;
