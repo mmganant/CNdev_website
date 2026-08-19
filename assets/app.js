@@ -66,7 +66,6 @@ const els = {
   geneTable: document.querySelector("#geneTable"),
   downloadPng: document.querySelector("#downloadPng"),
   markerChips: document.querySelectorAll(".marker-chip"),
-  heroCanvas: document.querySelector("#heroCanvas"),
   stageCards: document.querySelectorAll(".stage-card"),
   statCells: document.querySelector("#statCells"),
   statGenes: document.querySelector("#statGenes"),
@@ -152,7 +151,6 @@ async function loadBarseqDataset(id) {
   renderLibraryControls();
   hydrateSummary();
   resizeCanvas();
-  drawPreviewCanvases();
   renderAll();
 }
 
@@ -200,7 +198,6 @@ function renderLibraryControls() {
 function bindEvents() {
   window.addEventListener("resize", () => {
     resizeCanvas();
-    drawPreviewCanvases();
   });
 
   els.projectionControls.addEventListener("click", (event) => {
@@ -279,81 +276,8 @@ function renderAll() {
   drawPlot();
 }
 
-function drawPreviewCanvases() {
-  if (!state.data) return;
-  if (els.heroCanvas) {
-    drawStaticPreview(els.heroCanvas, "spatial", "finer_cell_types", 2.1, true);
-  }
-}
-
 function shouldSwitchBarseqYAxis(datasetId) {
   return !["E15", "E17"].includes(datasetId);
-}
-
-function drawStaticPreview(canvas, projection, colorBy, radius, muted) {
-  const rect = canvas.getBoundingClientRect();
-  const width = Math.max(220, Math.floor(rect.width || 420));
-  const height = Math.max(140, Math.floor(rect.height || 240));
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = Math.floor(width * dpr);
-  canvas.height = Math.floor(height * dpr);
-  const previewCtx = canvas.getContext("2d");
-  previewCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  previewCtx.clearRect(0, 0, width, height);
-  previewCtx.fillStyle = "#ffffff";
-  previewCtx.fillRect(0, 0, width, height);
-
-  if (muted) {
-    previewCtx.strokeStyle = "#dce5df";
-    previewCtx.lineWidth = 1;
-    for (let x = 18; x < width; x += 42) {
-      previewCtx.beginPath();
-      previewCtx.moveTo(x, 12);
-      previewCtx.lineTo(x, height - 12);
-      previewCtx.stroke();
-    }
-    for (let y = 18; y < height; y += 36) {
-      previewCtx.beginPath();
-      previewCtx.moveTo(12, y);
-      previewCtx.lineTo(width - 12, y);
-      previewCtx.stroke();
-    }
-  }
-
-  const bounds = computeBounds(projection);
-  const categories = state.data.annotations[colorBy] || [];
-  const pad = muted ? 16 : 22;
-  const usableW = Math.max(1, width - pad * 2);
-  const usableH = Math.max(1, height - pad * 2);
-  const xSpan = bounds.maxX - bounds.minX || 1;
-  const ySpan = bounds.maxY - bounds.minY || 1;
-  const scale = Math.min(usableW / xSpan, usableH / ySpan);
-  const plotW = xSpan * scale;
-  const plotH = ySpan * scale;
-  const offsetX = pad + (usableW - plotW) / 2;
-  const offsetY = pad + (usableH - plotH) / 2;
-  const step = Math.max(1, Math.floor(state.data.cells.length / 14000));
-
-  for (let i = 0; i < state.data.cells.length; i += step) {
-    const cell = state.data.cells[i];
-    if (state.schema.library_id !== undefined && cell[state.schema.library_id] !== state.selectedLibraryCode) continue;
-    const point = coordinateFor(cell, projection);
-    if (!point) continue;
-    const [xVal, yVal] = point;
-    if (!Number.isFinite(xVal) || !Number.isFinite(yVal)) continue;
-    const x = offsetX + (xVal - bounds.minX) * scale;
-    const y = shouldSwitchBarseqYAxis(state.datasetId)
-      ? offsetY + (yVal - bounds.minY) * scale
-      : height - offsetY - (yVal - bounds.minY) * scale;
-    const code = cell[state.schema[colorBy]];
-    const color = categories[code]?.color || "#64748b";
-    previewCtx.globalAlpha = muted ? 0.2 : 0.78;
-    previewCtx.fillStyle = muted ? "#788590" : color;
-    previewCtx.beginPath();
-    previewCtx.arc(x, y, radius, 0, Math.PI * 2);
-    previewCtx.fill();
-  }
-  previewCtx.globalAlpha = 1;
 }
 
 function getCategories(field = state.colorBy) {

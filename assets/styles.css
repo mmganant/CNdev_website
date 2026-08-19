@@ -223,11 +223,13 @@ h3 {
   box-shadow: var(--shadow);
 }
 
-.hero-figure canvas {
+.hero-figure canvas,
+.hero-figure img {
   display: block;
   width: 100%;
   height: min(58vh, 34rem);
   min-height: 23rem;
+  object-fit: contain;
   background: #ffffff;
 }
 
@@ -1066,7 +1068,8 @@ th:not(:first-child) {
     min-height: auto;
   }
 
-  .hero-figure canvas {
+  .hero-figure canvas,
+  .hero-figure img {
     height: 22rem;
     min-height: 18rem;
   }
