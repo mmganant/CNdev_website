@@ -1,5 +1,4 @@
 const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json";
-const PREVIEW_DATA_URL = "assets/data/barseq-previews.json";
 
 const ATLAS_COLOR_OVERRIDES = new Map([
   ["extracerebellar-fated", "#111111"],
@@ -68,7 +67,7 @@ const els = {
   downloadPng: document.querySelector("#downloadPng"),
   markerChips: document.querySelectorAll(".marker-chip"),
   heroCanvas: document.querySelector("#heroCanvas"),
-  stageCanvases: document.querySelectorAll(".stage-card canvas"),
+  stageCards: document.querySelectorAll(".stage-card"),
   statCells: document.querySelector("#statCells"),
   statGenes: document.querySelector("#statGenes"),
   statLibraries: document.querySelector("#statLibraries"),
@@ -93,7 +92,6 @@ const state = {
   activeGene: null,
   shardCache: new Map(),
   countBaseUrl: null,
-  previews: {},
   schema: {},
   datasetId: null,
   selectedLibraryCode: 0,
@@ -112,8 +110,6 @@ async function init() {
   const manifestResponse = await fetch(DATA_MANIFEST_URL);
   if (!manifestResponse.ok) throw new Error(`Could not load ${DATA_MANIFEST_URL}`);
   state.manifest = await manifestResponse.json();
-  const previewResponse = await fetch(PREVIEW_DATA_URL);
-  if (previewResponse.ok) state.previews = (await previewResponse.json()).datasets;
   bindEvents();
   await loadBarseqDataset(state.manifest.default);
 }
@@ -145,7 +141,7 @@ async function loadBarseqDataset(id) {
   }
   state.activeGene = null;
   state.selectedLibraryCode = 0;
-  els.stageCanvases.forEach((canvas) => canvas.closest(".stage-card")?.classList.toggle("active", canvas.closest(".stage-card")?.dataset.stage === id));
+  els.stageCards.forEach((card) => card.classList.toggle("active", card.dataset.stage === id));
   state.screenX = new Float32Array(state.data.cells.length);
   state.screenY = new Float32Array(state.data.cells.length);
   state.visible = new Uint8Array(state.data.cells.length);
@@ -192,6 +188,7 @@ function renderLibraryControls() {
     button.addEventListener("click", () => {
       state.selectedLibraryCode = code;
       state.selectedCodes.clear();
+      state.bounds.clear();
       renderLibraryControls();
       updateLibrarySummary();
       renderAll();
@@ -287,41 +284,10 @@ function drawPreviewCanvases() {
   if (els.heroCanvas) {
     drawStaticPreview(els.heroCanvas, "spatial", "finer_cell_types", 2.1, true);
   }
-  els.stageCanvases.forEach((canvas) => {
-    const card = canvas.closest(".stage-card");
-    const preview = state.previews[card?.dataset.stage];
-    if (preview) drawBarseqStagePreview(canvas, preview, card.dataset.stage);
-  });
 }
 
 function shouldSwitchBarseqYAxis(datasetId) {
   return !["E15", "E17"].includes(datasetId);
-}
-
-function drawBarseqStagePreview(canvas, preview, datasetId) {
-  const width = Math.max(220, Math.floor(canvas.getBoundingClientRect().width || 420));
-  const height = 180;
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = width * dpr; canvas.height = height * dpr;
-  const context = canvas.getContext("2d");
-  context.setTransform(dpr, 0, 0, dpr, 0, 0);
-  context.fillStyle = "#fff"; context.fillRect(0, 0, width, height);
-  const xs = preview.cells.map((cell) => cell[0]), ys = preview.cells.map((cell) => cell[1]);
-  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
-  const xSpan = maxX - minX || 1, ySpan = maxY - minY || 1;
-  const scale = Math.min((width - 24) / xSpan, (height - 24) / ySpan);
-  for (const cell of preview.cells) {
-    const x = 12 + (width - 24 - xSpan * scale) / 2 + (cell[0] - minX) * scale;
-    const yOffset = 12 + (height - 24 - ySpan * scale) / 2;
-    const y = shouldSwitchBarseqYAxis(datasetId)
-      ? yOffset + (cell[1] - minY) * scale
-      : height - yOffset - (cell[1] - minY) * scale;
-    const category = preview.categories[cell[2]];
-    context.fillStyle = atlasColorForLabel(category?.label) || category?.color || "#64748b";
-    context.globalAlpha = 0.7;
-    context.fillRect(x, y, 1.5, 1.5);
-  }
-  context.globalAlpha = 1;
 }
 
 function drawStaticPreview(canvas, projection, colorBy, radius, muted) {
@@ -406,7 +372,8 @@ function isVisible(cell) {
 }
 
 function computeBounds(projection) {
-  if (state.bounds.has(projection)) return state.bounds.get(projection);
+  const cacheKey = `${projection}:${state.selectedLibraryCode}`;
+  if (state.bounds.has(cacheKey)) return state.bounds.get(cacheKey);
   if (projection === "slices") {
     ensureLibraryBounds();
     const libraryCount = state.libraryBounds.length || 1;
@@ -422,6 +389,7 @@ function computeBounds(projection) {
   let maxY = -Infinity;
 
   for (const cell of state.data.cells) {
+    if (state.schema.library_id !== undefined && cell[state.schema.library_id] !== state.selectedLibraryCode) continue;
     const x = cell[map.x];
     const y = cell[map.y];
     if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
@@ -434,7 +402,7 @@ function computeBounds(projection) {
   const bounds = Number.isFinite(minX)
     ? { minX, maxX, minY, maxY }
     : { minX: 0, maxX: 1, minY: 0, maxY: 1 };
-  state.bounds.set(projection, bounds);
+  state.bounds.set(cacheKey, bounds);
   return bounds;
 }
 
