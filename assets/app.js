@@ -59,6 +59,7 @@ const els = {
   pointSize: document.querySelector("#pointSize"),
   pointSizeValue: document.querySelector("#pointSizeValue"),
   projectionControls: document.querySelector("#projectionControls"),
+  libraryControls: document.querySelector("#libraryControls"),
   resetFilters: document.querySelector("#resetFilters"),
   plotTitle: document.querySelector("#plotTitle"),
   datasetSource: document.querySelector("#datasetSource"),
@@ -95,6 +96,7 @@ const state = {
   previews: {},
   schema: {},
   datasetId: null,
+  selectedLibraryCode: 0,
 };
 
 const ctx = els.canvas.getContext("2d", { alpha: true });
@@ -142,6 +144,7 @@ async function loadBarseqDataset(id) {
     state.countBaseUrl = entry.count_index_url.replace(/index\.json$/, "");
   }
   state.activeGene = null;
+  state.selectedLibraryCode = 0;
   els.stageCanvases.forEach((canvas) => canvas.closest(".stage-card")?.classList.toggle("active", canvas.closest(".stage-card")?.dataset.stage === id));
   state.screenX = new Float32Array(state.data.cells.length);
   state.screenY = new Float32Array(state.data.cells.length);
@@ -150,6 +153,7 @@ async function loadBarseqDataset(id) {
   state.libraryBounds = null;
   state.selectedCodes.clear();
 
+  renderLibraryControls();
   hydrateSummary();
   resizeCanvas();
   drawPreviewCanvases();
@@ -158,11 +162,42 @@ async function loadBarseqDataset(id) {
 
 function hydrateSummary() {
   const { metadata } = state.data;
-  els.statCells.textContent = fmt.format(metadata.n_cells);
   els.statGenes.textContent = fmt.format(metadata.n_genes);
-  els.statLibraries.textContent = fmt.format(state.data.annotations.library_id.length);
   els.datasetSource.textContent = metadata.source_file;
   els.pointSizeValue.textContent = Number(els.pointSize.value).toFixed(1);
+  updateLibrarySummary();
+}
+
+function selectedLibrary() {
+  return state.data.annotations.library_id?.[state.selectedLibraryCode];
+}
+
+function updateLibrarySummary() {
+  const libraries = state.data.annotations.library_id || [];
+  const library = selectedLibrary();
+  els.statCells.textContent = fmt.format(library?.count || 0);
+  els.statLibraries.textContent = library ? `${library.label} · 1/${libraries.length}` : "--";
+}
+
+function renderLibraryControls() {
+  els.libraryControls.replaceChildren();
+  const libraries = state.data.annotations.library_id || [];
+  libraries.forEach((library, code) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "library-option";
+    button.classList.toggle("active", code === state.selectedLibraryCode);
+    button.setAttribute("aria-pressed", String(code === state.selectedLibraryCode));
+    button.innerHTML = `<strong>${escapeHtml(library.label)}</strong><span>${fmt.format(library.count)} cells</span>`;
+    button.addEventListener("click", () => {
+      state.selectedLibraryCode = code;
+      state.selectedCodes.clear();
+      renderLibraryControls();
+      updateLibrarySummary();
+      renderAll();
+    });
+    els.libraryControls.append(button);
+  });
 }
 
 function bindEvents() {
@@ -239,7 +274,9 @@ function resizeCanvas() {
 }
 
 function renderAll() {
-  els.plotTitle.textContent = projectionMap[state.projection].label;
+  const library = selectedLibrary();
+  const color = state.activeGene?.gene || null;
+  els.plotTitle.textContent = [projectionMap[state.projection].label, library?.label, color].filter(Boolean).join(" · ");
   renderLegend();
   renderGeneTable();
   drawPlot();
@@ -333,6 +370,7 @@ function drawStaticPreview(canvas, projection, colorBy, radius, muted) {
 
   for (let i = 0; i < state.data.cells.length; i += step) {
     const cell = state.data.cells[i];
+    if (state.schema.library_id !== undefined && cell[state.schema.library_id] !== state.selectedLibraryCode) continue;
     const point = coordinateFor(cell, projection);
     if (!point) continue;
     const [xVal, yVal] = point;
@@ -361,6 +399,8 @@ function codeFor(cell, field = state.colorBy) {
 }
 
 function isVisible(cell) {
+  const libraryColumn = state.schema.library_id;
+  if (libraryColumn !== undefined && cell[libraryColumn] !== state.selectedLibraryCode) return false;
   if (state.selectedCodes.size === 0) return true;
   return state.selectedCodes.has(codeFor(cell));
 }
@@ -580,7 +620,7 @@ async function loadBarseqGene(requestedGene) {
   const max = nonzero[Math.min(nonzero.length - 1, Math.floor(nonzero.length * 0.99))] || 1;
   state.activeGene = { gene, values, max };
   els.geneSearch.value = gene;
-  els.plotTitle.textContent = `${projectionMap[state.projection].label} · ${gene}`;
+  els.plotTitle.textContent = [projectionMap[state.projection].label, selectedLibrary()?.label, gene].filter(Boolean).join(" · ");
   renderLegend();
   drawPlot();
 }

@@ -1086,6 +1086,37 @@ th:not(:first-child) {
   }
 }
 
+.library-selector {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.library-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  min-height: 2.7rem;
+  padding: 0.5rem 0.65rem;
+  background: #fbfcfb;
+  text-align: left;
+}
+
+.library-option span {
+  color: var(--muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.library-option.active {
+  border-color: var(--leaf);
+  background: #eaf6ef;
+  box-shadow: inset 3px 0 0 var(--leaf);
+  color: var(--leaf-dark);
+}
+
 /* Refined atlas presentation */
 :root {
   --ink: #16231e;
