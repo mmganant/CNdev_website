@@ -1265,11 +1265,21 @@ button {
 }
 
 .spatial-band {
-  background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(241,247,244,0.9));
+  background-image:
+    linear-gradient(180deg, rgba(255,255,255,0.88), rgba(241,247,244,0.92)),
+    url("images/barseq_data.png");
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
 }
 
 .singlecell-band {
-  background: linear-gradient(180deg, #f8fbf9, #f1f6f4);
+  background-image:
+    linear-gradient(180deg, rgba(248,251,249,0.88), rgba(241,246,244,0.93)),
+    url("images/scrna_data.png");
+  background-position: center;
+  background-size: cover;
+  background-attachment: fixed;
 }
 
 .section-title,
@@ -1444,4 +1454,6 @@ td {
   .brand-copy small { display: none; }
   .hero-figure { transform: none; }
   h1 { font-size: clamp(2.75rem, 15vw, 4.2rem); }
+  .spatial-band,
+  .singlecell-band { background-attachment: scroll; }
 }

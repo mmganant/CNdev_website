@@ -9,7 +9,7 @@ dataset_filter <- if (length(args) >= 3) args[[3]] else NULL
 genes_per_shard <- if (length(args) >= 4) as.integer(args[[4]]) else 64L
 
 datasets <- list(
-  list(file = "URL.rds", slug = "url"),
+  list(file = "URL_082026.rds", slug = "url"),
   list(file = "all_inhib.rds", slug = "all-inhib"),
   list(file = "combined_alltp08_2026.rds", slug = "combined-alltp08-2026")
 )
