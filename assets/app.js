@@ -140,7 +140,11 @@ async function loadBarseqDataset(id) {
   }
   state.activeGene = null;
   state.selectedLibraryCode = 0;
-  els.stageCards.forEach((card) => card.classList.toggle("active", card.dataset.stage === id));
+  els.stageCards.forEach((card) => {
+    const active = card.dataset.stage === id;
+    card.classList.toggle("active", active);
+    if (!card.disabled) card.setAttribute("aria-pressed", String(active));
+  });
   state.screenX = new Float32Array(state.data.cells.length);
   state.screenY = new Float32Array(state.data.cells.length);
   state.visible = new Uint8Array(state.data.cells.length);
@@ -206,6 +210,7 @@ function bindEvents() {
     state.projection = button.dataset.projection;
     els.projectionControls.querySelectorAll("button").forEach((item) => {
       item.classList.toggle("active", item === button);
+      item.setAttribute("aria-pressed", String(item === button));
     });
     renderAll();
   });
@@ -445,6 +450,7 @@ function renderLegend() {
     const hasFilter = state.selectedCodes.size > 0;
     button.classList.toggle("active", selected || !hasFilter);
     button.classList.toggle("dimmed", hasFilter && !selected);
+    button.setAttribute("aria-pressed", String(selected || !hasFilter));
     button.innerHTML = `
       <span class="swatch" style="background:${category.color}"></span>
       <span class="legend-name" title="${escapeHtml(category.label)}">${escapeHtml(category.label)}</span>

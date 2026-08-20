@@ -8,7 +8,7 @@
       content="Multiomic atlas of cerebellar development"
     >
     <title>Multiomic atlas of cerebellar development</title>
-    <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="assets/styles.css?v=20260819-4">
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to datasets</a>
@@ -45,6 +45,36 @@
     </header>
 
     <main id="main-content">
+      <section class="atlas-overview" aria-labelledby="overviewTitle">
+        <div class="section-inner overview-layout">
+          <div class="overview-copy">
+            <p class="eyebrow">One atlas, two modalities</p>
+            <h2 id="overviewTitle">Follow development from cell state to spatial position</h2>
+            <p>Move through the atlas in the order that fits your question. Every view uses the same cell-type color language, so identities stay recognizable across datasets.</p>
+          </div>
+          <div class="journey-grid" aria-label="Atlas workflow">
+            <a class="journey-card" href="#spatial">
+              <span class="journey-number" aria-hidden="true">01</span>
+              <strong>Compare timepoints</strong>
+              <span>Scan BARseq3 sections across development and choose a stage.</span>
+              <em>View spatial datasets <span aria-hidden="true">→</span></em>
+            </a>
+            <a class="journey-card" href="#explorer">
+              <span class="journey-number" aria-hidden="true">02</span>
+              <strong>Map genes in space</strong>
+              <span>Select a library, filter cell types, and plot sparse gene counts.</span>
+              <em>Open BARseq3 explorer <span aria-hidden="true">→</span></em>
+            </a>
+            <a class="journey-card" href="#singlecell">
+              <span class="journey-number" aria-hidden="true">03</span>
+              <strong>Explore cell states</strong>
+              <span>Compare scRNA-seq UMAPs, annotations, and gene expression.</span>
+              <em>Open single-cell explorer <span aria-hidden="true">→</span></em>
+            </a>
+          </div>
+        </div>
+      </section>
+
       <section id="spatial" class="section spatial-band">
         <div class="section-inner">
           <div class="section-title">
@@ -82,8 +112,9 @@
       <section id="explorer" class="explorer-section">
         <div class="explorer-header">
           <div>
-            <p class="eyebrow" id="datasetSource">Loading dataset</p>
+            <p class="eyebrow">Interactive spatial atlas</p>
             <h2>Explore the BARseq3 atlas</h2>
+            <p class="source-line"><span>Loaded dataset</span><strong id="datasetSource">Loading dataset</strong></p>
           </div>
           <dl class="stats" aria-label="Dataset summary">
             <div><dt>Cells</dt><dd id="statCells">--</dd></div>
@@ -100,7 +131,7 @@
                 <h3><span class="control-step">1</span> Projection</h3>
               </div>
               <div class="segmented" id="projectionControls" role="group" aria-label="Projection">
-                <button data-projection="spatial" class="active" type="button">Spatial</button>
+                <button data-projection="spatial" class="active" type="button" aria-pressed="true">Spatial</button>
               </div>
             </section>
 
@@ -149,7 +180,11 @@
                   <p class="eyebrow">Local AnnData browser</p>
                   <h3 id="plotTitle">Spatial map</h3>
                 </div>
-                <div class="viewer-actions">
+                <div class="viewer-utilities">
+                  <label class="viewer-gene-search" for="geneSearch">
+                    <span>Visualize gene</span>
+                    <input id="geneSearch" type="search" placeholder="Type a gene name" aria-label="Search genes">
+                  </label>
                   <button id="downloadPng" type="button">Export PNG</button>
                 </div>
               </div>
@@ -161,9 +196,11 @@
 
             <div class="lower-grid">
               <section class="panel">
-                <div class="section-head">
-                  <h3>Find a gene</h3>
-                  <input id="geneSearch" type="search" placeholder="Type a gene name" aria-label="Search genes">
+                <div class="section-head gene-catalog-head">
+                  <div>
+                    <h3>Gene catalog</h3>
+                    <p>Select a row to plot expression. Use the search above to filter genes.</p>
+                  </div>
                 </div>
                 <div class="table-wrap">
                   <table>
@@ -232,12 +269,19 @@
     </main>
 
     <footer class="footer">
-      <span>Manjari Anant</span>
-      <span>Built for multiomic cerebellum development atlas exploration</span>
-      <a href="https://mmganant.github.io/CNdev_website/">Design inspiration</a>
+      <div class="footer-brand">
+        <span class="brand-mark" aria-hidden="true">CN</span>
+        <div><strong>Mouse Cerebellum</strong><span>Multiomic developmental atlas</span></div>
+      </div>
+      <p>BARseq3 spatial transcriptomics and scRNA-seq exploration across cerebellar development.</p>
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="#home">Back to top</a>
+        <a href="#spatial">Spatial data</a>
+        <a href="#singlecell">Single-cell data</a>
+      </nav>
     </footer>
 
-    <script src="assets/app.js" defer></script>
-    <script src="assets/scrna.js" defer></script>
+    <script src="assets/app.js?v=20260819-3" defer></script>
+    <script src="assets/scrna.js?v=20260819-3" defer></script>
   </body>
 </html>

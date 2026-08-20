@@ -109,6 +109,7 @@ function bindScrnaEvents() {
 async function loadScrnaDataset(id) {
   const entry = scrnaState.manifest.datasets.find((item) => item.id === id);
   if (!entry) return;
+  scrnaEls.explorer.setAttribute("aria-busy", "true");
   scrnaEls.title.textContent = `Loading ${entry.title}`;
   scrnaEls.stats.textContent = "Reading compact browser data…";
   scrnaState.data = scrnaState.dataCache.get(id);
@@ -141,6 +142,7 @@ async function loadScrnaDataset(id) {
   await renderEmbeddingCards();
   resizeScrnaCanvas();
   renderScrna();
+  scrnaEls.explorer.setAttribute("aria-busy", "false");
 }
 
 function renderGeneResults(query) {
@@ -191,7 +193,9 @@ async function renderEmbeddingCards() {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "scrna-embedding-card";
-    button.classList.toggle("active", dataset.id === scrnaEls.dataset.value);
+    const active = dataset.id === scrnaEls.dataset.value;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
     const canvas = document.createElement("canvas");
     canvas.setAttribute("aria-label", `${dataset.title} UMAP preview`);
     const label = document.createElement("span");
@@ -321,7 +325,10 @@ function renderScrnaLegend() {
   categories.forEach((category, code) => {
     const button = document.createElement("button");
     button.type = "button"; button.className = "legend-item";
-    button.classList.toggle("muted", scrnaState.selected.size > 0 && !scrnaState.selected.has(code));
+    const selected = scrnaState.selected.has(code);
+    const hasFilter = scrnaState.selected.size > 0;
+    button.classList.toggle("muted", hasFilter && !selected);
+    button.setAttribute("aria-pressed", String(selected || !hasFilter));
     button.innerHTML = `<span class="swatch" style="background:${category.color}"></span><span>${category.label}</span><strong>${scrnaFmt.format(category.count)}</strong>`;
     button.addEventListener("click", () => {
       if (scrnaState.selected.has(code)) scrnaState.selected.delete(code); else scrnaState.selected.add(code);
