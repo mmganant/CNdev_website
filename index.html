@@ -36,7 +36,7 @@
         </div>
       </div>
       <figure class="hero-figure">
-        <img src="assets/images/barseq_data.png" alt="BARseq3 spatial atlas across mouse cerebellar development">
+        <img src="assets/images/website_title_image.png" alt="Developing mouse cerebellum atlas">
         <figcaption>
           Spatial map of the developing mouse cerebellum. Explore cell identities, genes, and developmental timepoints below.
         </figcaption>
@@ -64,6 +64,15 @@
             <button class="stage-card live" type="button" data-stage="E14"><img src="assets/images/barseq/e14.png" alt="E14 BARseq3 spatial atlas"><span>E14</span></button>
             <button class="stage-card live" type="button" data-stage="E15"><img src="assets/images/barseq/e15.png" alt="E15 BARseq3 spatial atlas"><span>E15</span></button>
             <button class="stage-card live" type="button" data-stage="E17"><img src="assets/images/barseq/e17.png" alt="E17 BARseq3 spatial atlas"><span>E17</span></button>
+            <button class="stage-card" type="button" data-stage="P0" disabled>
+              <span class="stage-placeholder" aria-hidden="true">P0</span><span>P0</span>
+            </button>
+            <button class="stage-card" type="button" data-stage="P4" disabled>
+              <span class="stage-placeholder" aria-hidden="true">P4</span><span>P4</span>
+            </button>
+            <button class="stage-card" type="button" data-stage="P56" disabled>
+              <span class="stage-placeholder" aria-hidden="true">P56</span><span>P56</span>
+            </button>
           </div>
         </div>
       </section>
@@ -117,9 +126,9 @@
             <section>
               <div class="range-row">
                 <label class="field-label" for="pointSize">Point size</label>
-                <output id="pointSizeValue" for="pointSize">1.2</output>
+                <output id="pointSizeValue" for="pointSize">2.5</output>
               </div>
-              <input id="pointSize" type="range" min="0.6" max="6" step="0.2" value="1.2">
+              <input id="pointSize" type="range" min="0.5" max="6" step="0.1" value="2.5">
             </section>
 
             <section>
