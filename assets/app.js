@@ -1,4 +1,5 @@
 const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json";
+const BARSEQ_VISIBLE_ANNOTATIONS = ["excitatory_group", "finer_cell_types"];
 
 const ATLAS_COLOR_OVERRIDES = new Map([
   ["extracerebellar-fated", "#111111"],
@@ -123,7 +124,7 @@ async function loadBarseqDataset(id) {
   applyAtlasColorOverrides(state.data.annotations);
   state.schema = Object.fromEntries(state.data.schema.map((field, index) => [field, index]));
   els.colorBy.replaceChildren();
-  const annotationFields = Object.keys(state.data.annotations);
+  const annotationFields = BARSEQ_VISIBLE_ANNOTATIONS.filter((field) => state.data.annotations[field]);
   for (const field of annotationFields) els.colorBy.add(new Option(humanizeField(field), field));
   const preferredField = annotationFields.includes("finer_cell_types") ? "finer_cell_types" : annotationFields[0];
   els.colorBy.value = preferredField;

@@ -1,5 +1,24 @@
 const SCRNA_MANIFEST_URL = "assets/data/scrna/manifest.json";
 
+const SCRNA_VISIBLE_ANNOTATIONS = {
+  url: ["cell_type_coarse", "Sample", "branch", "TimePoint"],
+  "combined-alltp08-2026": [
+    "Sample",
+    "TimePoint",
+    "med_2p_branch_new",
+    "med_2p_branch_coarse",
+    "DCN",
+    "subareas",
+    "orig.ident",
+  ],
+};
+
+function visibleScrnaAnnotations(datasetId, annotations) {
+  const requested = SCRNA_VISIBLE_ANNOTATIONS[datasetId];
+  const available = Object.keys(annotations);
+  return requested ? requested.filter((field) => annotations[field]) : available;
+}
+
 const SCRNA_COLOR_OVERRIDES = new Map([
   ["extracerebellar-fated", "#111111"], ["intp", "#2ca25f"],
   ["inta/lat", "#f28e2b"], ["inta", "#e76f9a"], ["lat", "#d62728"],
@@ -132,7 +151,8 @@ async function loadScrnaDataset(id) {
   scrnaState.screenY = new Float32Array(scrnaState.data.cells.length);
   scrnaState.selected.clear();
   scrnaEls.colorBy.replaceChildren();
-  for (const field of Object.keys(scrnaState.data.annotations)) scrnaEls.colorBy.add(new Option(humanizeScrnaField(field), field));
+  const annotationFields = visibleScrnaAnnotations(id, scrnaState.data.annotations);
+  for (const field of annotationFields) scrnaEls.colorBy.add(new Option(humanizeScrnaField(field), field));
   scrnaState.colorBy = scrnaEls.colorBy.value;
   scrnaEls.gene.value = "";
   scrnaEls.geneResults.replaceChildren();
@@ -207,7 +227,7 @@ async function renderEmbeddingCards() {
       scrnaEls.explorer.scrollIntoView({ block: "start" });
     });
     scrnaEls.embeddingGrid.append(button);
-    drawEmbeddingPreview(canvas, data);
+    drawEmbeddingPreview(canvas, data, dataset.id);
   }
 }
 
@@ -223,7 +243,7 @@ function boundsForEmbedding(name = scrnaState.embedding, data = scrnaState.data,
   return { minX, maxX, minY, maxY };
 }
 
-function drawEmbeddingPreview(canvas, data) {
+function drawEmbeddingPreview(canvas, data, datasetId) {
   const name = "umap";
   const schema = Object.fromEntries(data.schema.map((field, index) => [field, index]));
   const width = 260, height = 150, dpr = window.devicePixelRatio || 1;
@@ -233,7 +253,7 @@ function drawEmbeddingPreview(canvas, data) {
   context.fillStyle = "#fff"; context.fillRect(0, 0, width, height);
   const bounds = boundsForEmbedding(name, data, schema);
   const [xi, yi] = embeddingIndices(name, schema);
-  const colorBy = Object.keys(data.annotations)[0];
+  const colorBy = visibleScrnaAnnotations(datasetId, data.annotations)[0];
   const ci = schema[colorBy];
   const categories = data.annotations[colorBy];
   const xSpan = bounds.maxX - bounds.minX || 1, ySpan = bounds.maxY - bounds.minY || 1;
