@@ -2648,3 +2648,77 @@ td {
     padding: 1rem;
   }
 }
+
+/* Clickable modality schematics */
+.journey-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.journey-card {
+  overflow: hidden;
+  min-height: 0;
+  padding: 0;
+}
+
+.journey-media {
+  display: grid;
+  height: clamp(9rem, 14vw, 12rem);
+  place-items: center;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+
+.journey-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.25s ease;
+}
+
+.journey-card:hover .journey-media img {
+  transform: scale(1.025);
+}
+
+.journey-content {
+  display: flex;
+  min-height: 13rem;
+  padding: 1.25rem 1.35rem 1.35rem;
+  flex-direction: column;
+}
+
+.journey-content .journey-number {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.journey-content > span:not(.journey-number) {
+  color: var(--soft-ink);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.journey-content em {
+  margin-top: auto;
+}
+
+@media (max-width: 820px) {
+  .journey-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .journey-media {
+    height: clamp(9rem, 32vw, 12rem);
+  }
+
+  .journey-content {
+    min-height: 11.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journey-media img {
+    transition: none;
+  }
+}
