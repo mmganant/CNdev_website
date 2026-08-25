@@ -1,8 +1,16 @@
 // Data configuration and per-dataset metadata visibility
-const SCRNA_MANIFEST_URL = "assets/data/scrna/manifest.json";
+const SCRNA_MANIFEST_URL = "assets/data/scrna/manifest.json?v=20260825-1";
 
 const SCRNA_VISIBLE_ANNOTATIONS = {
   url: ["cell_type_coarse", "Sample", "branch", "TimePoint"],
+  "all-inhib": [
+    "orig.ident",
+    "DCN",
+    "timepoint",
+    "final.clusters",
+    "collector",
+    "ident",
+  ],
   "combined-alltp08-2026": [
     "Sample",
     "TimePoint",

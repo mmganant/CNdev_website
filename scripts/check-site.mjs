@@ -7,7 +7,8 @@ const failures = [];
 let checkedFiles = 0;
 
 function projectPath(relativePath) {
-  return path.join(projectRoot, relativePath.replace(/^\/+/, ""));
+  const filePath = relativePath.split(/[?#]/, 1)[0];
+  return path.join(projectRoot, filePath.replace(/^\/+/, ""));
 }
 
 function requireFile(relativePath, context) {

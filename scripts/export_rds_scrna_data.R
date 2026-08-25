@@ -159,6 +159,22 @@ extract_dataset <- function(spec) {
     stop(spec$file, " does not contain Seurat metadata and a UMAP reduction")
   }
 
+  active_ident <- slots[["active.ident"]]
+  if (!is.null(active_ident) && !"ident" %in% names(metadata)) {
+    ident_values <- as.character(active_ident)
+    ident_cells <- names(active_ident)
+    metadata_cells <- rownames(metadata)
+    if (!is.null(ident_cells) && !is.null(metadata_cells)) {
+      ident_order <- match(metadata_cells, ident_cells)
+      if (anyNA(ident_order)) stop("Active identities do not align with metadata in ", spec$file)
+      ident_values <- ident_values[ident_order]
+    }
+    if (length(ident_values) != nrow(metadata)) {
+      stop("Active identity count does not match metadata in ", spec$file)
+    }
+    metadata[["ident"]] <- ident_values
+  }
+
   embedding <- attributes(reductions[["umap"]])[["cell.embeddings"]]
   if (is.null(embedding) || ncol(embedding) < 2 || nrow(embedding) != nrow(metadata)) {
     stop("UMAP dimensions do not match metadata in ", spec$file)
