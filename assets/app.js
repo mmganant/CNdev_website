@@ -1,9 +1,43 @@
-const DATA_URL = "assets/data/site-data.json";
+const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json";
+const BARSEQ_VISIBLE_ANNOTATIONS = ["excitatory_group", "finer_cell_types"];
+
+const ATLAS_COLOR_OVERRIDES = new Map([
+  ["extracerebellar-fated", "#111111"],
+  ["intp", "#2ca25f"],
+  ["inta/lat", "#f28e2b"],
+  ["inta", "#e76f9a"],
+  ["lat", "#d62728"],
+  ["medearly", "#8c564b"],
+  ["med early", "#8c564b"],
+  ["early medial", "#8c564b"],
+  ["medlate", "#377eb8"],
+  ["med late", "#377eb8"],
+  ["late medial", "#377eb8"],
+  ["rl", "#78cbe6"],
+  ["vz", "#78cbe6"],
+  ["int/lat prog", "#f2c94c"],
+  ["int+latprog", "#f2c94c"],
+  ["i1", "#f28e2b"],
+  ["i2/3", "#2ca25f"],
+  ["i2", "#2ca25f"],
+  ["i3", "#2ca25f"],
+  ["other", "#d9dedb"],
+  ["others", "#d9dedb"],
+]);
+
+function atlasColorForLabel(label) {
+  const key = String(label).trim().toLowerCase().replace(/_/g, " ").replace(/\s+/g, " ");
+  return ATLAS_COLOR_OVERRIDES.get(key);
+}
+
+function applyAtlasColorOverrides(annotations) {
+  for (const rows of Object.values(annotations || {})) {
+    for (const row of rows) row.color = atlasColorForLabel(row.label) || row.color;
+  }
+}
 
 const projectionMap = {
   spatial: { label: "Spatial map", x: 0, y: 1 },
-  umap: { label: "UMAP", x: 2, y: 3 },
-  slices: { label: "Library split", split: true },
 };
 
 const categoryLabels = {
@@ -17,48 +51,31 @@ const categoryLabels = {
   inhibitory: "Inhibitory program",
 };
 
-const schema = {
-  cell_types: 9,
-  finer_cell_types: 10,
-  leiden: 11,
-  hybrid_leiden: 12,
-  library_id: 13,
-  timepoint: 14,
-  excitatory: 15,
-  inhibitory: 16,
-  n_counts: 17,
-  n_genes_by_counts: 18,
-  total_counts: 19,
-};
-
 const els = {
   canvas: document.querySelector("#atlasCanvas"),
   tooltip: document.querySelector("#tooltip"),
   legend: document.querySelector("#legend"),
-  bars: document.querySelector("#bars"),
   colorBy: document.querySelector("#colorBy"),
   pointSize: document.querySelector("#pointSize"),
   pointSizeValue: document.querySelector("#pointSizeValue"),
   projectionControls: document.querySelector("#projectionControls"),
+  libraryControls: document.querySelector("#libraryControls"),
   resetFilters: document.querySelector("#resetFilters"),
   plotTitle: document.querySelector("#plotTitle"),
   datasetSource: document.querySelector("#datasetSource"),
   geneSearch: document.querySelector("#geneSearch"),
   geneTable: document.querySelector("#geneTable"),
-  qcGrid: document.querySelector("#qcGrid"),
   downloadPng: document.querySelector("#downloadPng"),
   markerChips: document.querySelectorAll(".marker-chip"),
-  heroCanvas: document.querySelector("#heroCanvas"),
-  singleCellCanvas: document.querySelector("#singleCellCanvas"),
-  stageCanvases: document.querySelectorAll(".stage-card canvas"),
+  stageCards: document.querySelectorAll(".stage-card"),
   statCells: document.querySelector("#statCells"),
   statGenes: document.querySelector("#statGenes"),
   statLibraries: document.querySelector("#statLibraries"),
   statVisible: document.querySelector("#statVisible"),
-  countLabel: document.querySelector("#countLabel"),
 };
 
 const state = {
+  manifest: null,
   data: null,
   projection: "spatial",
   colorBy: "finer_cell_types",
@@ -70,44 +87,122 @@ const state = {
   visible: new Uint8Array(),
   width: 0,
   height: 0,
+  countIndex: null,
+  geneLookup: new Map(),
+  activeGene: null,
+  shardCache: new Map(),
+  countBaseUrl: null,
+  schema: {},
+  datasetId: null,
+  selectedLibraryCode: 0,
 };
 
 const ctx = els.canvas.getContext("2d", { alpha: true });
 const fmt = new Intl.NumberFormat("en-US");
 
+function humanizeField(field) {
+  return field.replace(/[._]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 init();
 
 async function init() {
-  const res = await fetch(DATA_URL);
-  if (!res.ok) {
-    throw new Error(`Could not load ${DATA_URL}`);
-  }
+  const manifestResponse = await fetch(DATA_MANIFEST_URL);
+  if (!manifestResponse.ok) throw new Error(`Could not load ${DATA_MANIFEST_URL}`);
+  state.manifest = await manifestResponse.json();
+  bindEvents();
+  await loadBarseqDataset(state.manifest.default);
+}
+
+async function loadBarseqDataset(id) {
+  const entry = state.manifest.datasets.find((dataset) => dataset.id === id);
+  if (!entry) return;
+  const res = await fetch(entry.data_url);
+  if (!res.ok) throw new Error(`Could not load ${entry.data_url}`);
   state.data = await res.json();
+  state.datasetId = id;
+  applyAtlasColorOverrides(state.data.annotations);
+  state.schema = Object.fromEntries(state.data.schema.map((field, index) => [field, index]));
+  els.colorBy.replaceChildren();
+  const annotationFields = BARSEQ_VISIBLE_ANNOTATIONS.filter((field) => state.data.annotations[field]);
+  for (const field of annotationFields) els.colorBy.add(new Option(humanizeField(field), field));
+  const preferredField = annotationFields.includes("finer_cell_types") ? "finer_cell_types" : annotationFields[0];
+  els.colorBy.value = preferredField;
+  state.colorBy = els.colorBy.value;
+  state.countIndex = null;
+  state.geneLookup = new Map();
+  state.countBaseUrl = null;
+  if (entry.count_index_url) {
+    const countResponse = await fetch(entry.count_index_url);
+    if (!countResponse.ok) throw new Error(`Could not load ${entry.count_index_url}`);
+    state.countIndex = await countResponse.json();
+    state.geneLookup = new Map(state.countIndex.genes.map((gene, index) => [gene.toLowerCase(), index]));
+    state.countBaseUrl = entry.count_index_url.replace(/index\.json$/, "");
+  }
+  state.activeGene = null;
+  state.selectedLibraryCode = 0;
+  els.stageCards.forEach((card) => {
+    const active = card.dataset.stage === id;
+    card.classList.toggle("active", active);
+    if (!card.disabled) card.setAttribute("aria-pressed", String(active));
+  });
   state.screenX = new Float32Array(state.data.cells.length);
   state.screenY = new Float32Array(state.data.cells.length);
   state.visible = new Uint8Array(state.data.cells.length);
+  state.bounds.clear();
+  state.libraryBounds = null;
+  state.selectedCodes.clear();
 
+  renderLibraryControls();
   hydrateSummary();
-  bindEvents();
   resizeCanvas();
-  drawPreviewCanvases();
   renderAll();
 }
 
 function hydrateSummary() {
   const { metadata } = state.data;
-  els.statCells.textContent = fmt.format(metadata.n_cells);
   els.statGenes.textContent = fmt.format(metadata.n_genes);
-  els.statLibraries.textContent = fmt.format(state.data.annotations.library_id.length);
   els.datasetSource.textContent = metadata.source_file;
   els.pointSizeValue.textContent = Number(els.pointSize.value).toFixed(1);
-  renderQcSummary();
+  updateLibrarySummary();
+}
+
+function selectedLibrary() {
+  return state.data.annotations.library_id?.[state.selectedLibraryCode];
+}
+
+function updateLibrarySummary() {
+  const libraries = state.data.annotations.library_id || [];
+  const library = selectedLibrary();
+  els.statCells.textContent = fmt.format(library?.count || 0);
+  els.statLibraries.textContent = library ? `${library.label} · 1/${libraries.length}` : "--";
+}
+
+function renderLibraryControls() {
+  els.libraryControls.replaceChildren();
+  const libraries = state.data.annotations.library_id || [];
+  libraries.forEach((library, code) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "library-option";
+    button.classList.toggle("active", code === state.selectedLibraryCode);
+    button.setAttribute("aria-pressed", String(code === state.selectedLibraryCode));
+    button.innerHTML = `<strong>${escapeHtml(library.label)}</strong><span>${fmt.format(library.count)} cells</span>`;
+    button.addEventListener("click", () => {
+      state.selectedLibraryCode = code;
+      state.selectedCodes.clear();
+      state.bounds.clear();
+      renderLibraryControls();
+      updateLibrarySummary();
+      renderAll();
+    });
+    els.libraryControls.append(button);
+  });
 }
 
 function bindEvents() {
   window.addEventListener("resize", () => {
     resizeCanvas();
-    drawPreviewCanvases();
   });
 
   els.projectionControls.addEventListener("click", (event) => {
@@ -116,12 +211,14 @@ function bindEvents() {
     state.projection = button.dataset.projection;
     els.projectionControls.querySelectorAll("button").forEach((item) => {
       item.classList.toggle("active", item === button);
+      item.setAttribute("aria-pressed", String(item === button));
     });
     renderAll();
   });
 
   els.colorBy.addEventListener("change", () => {
     state.colorBy = els.colorBy.value;
+    state.activeGene = null;
     state.selectedCodes.clear();
     renderAll();
   });
@@ -132,15 +229,21 @@ function bindEvents() {
   });
 
   els.resetFilters.addEventListener("click", () => {
+    state.activeGene = null;
+    els.geneSearch.value = "";
     state.selectedCodes.clear();
     renderAll();
   });
 
   els.geneSearch.addEventListener("input", renderGeneTable);
+  els.geneSearch.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") loadBarseqGene(els.geneSearch.value);
+  });
   els.markerChips.forEach((chip) => {
     chip.addEventListener("click", () => {
       els.geneSearch.value = chip.dataset.gene || chip.textContent.trim();
       renderGeneTable();
+      loadBarseqGene(els.geneSearch.value);
       document.querySelector("#explorer").scrollIntoView({ block: "start" });
       els.geneSearch.focus({ preventScroll: true });
     });
@@ -149,6 +252,13 @@ function bindEvents() {
   els.canvas.addEventListener("mousemove", showTooltip);
   els.canvas.addEventListener("mouseleave", () => {
     els.tooltip.hidden = true;
+  });
+  document.querySelector("#stageGrid")?.addEventListener("click", async (event) => {
+    const card = event.target.closest("[data-stage]");
+    if (!card || !state.manifest.datasets.some((dataset) => dataset.id === card.dataset.stage)) return;
+    event.preventDefault();
+    await loadBarseqDataset(card.dataset.stage);
+    document.querySelector("#explorer").scrollIntoView({ block: "start" });
   });
 }
 
@@ -164,90 +274,16 @@ function resizeCanvas() {
 }
 
 function renderAll() {
-  els.plotTitle.textContent = projectionMap[state.projection].label;
-  els.countLabel.textContent = categoryLabels[state.colorBy];
+  const library = selectedLibrary();
+  const color = state.activeGene?.gene || null;
+  els.plotTitle.textContent = [projectionMap[state.projection].label, library?.label, color].filter(Boolean).join(" · ");
   renderLegend();
-  renderBars();
   renderGeneTable();
   drawPlot();
 }
 
-function drawPreviewCanvases() {
-  if (!state.data) return;
-  if (els.heroCanvas) {
-    drawStaticPreview(els.heroCanvas, "spatial", "finer_cell_types", 2.1, true);
-  }
-  if (els.singleCellCanvas) {
-    drawStaticPreview(els.singleCellCanvas, "umap", "finer_cell_types", 2.1, false);
-  }
-  els.stageCanvases.forEach((canvas) => {
-    const card = canvas.closest(".stage-card");
-    const live = card?.classList.contains("live");
-    drawStaticPreview(canvas, live ? "spatial" : "slices", live ? "finer_cell_types" : "cell_types", live ? 1.35 : 1.6, !live);
-  });
-}
-
-function drawStaticPreview(canvas, projection, colorBy, radius, muted) {
-  const rect = canvas.getBoundingClientRect();
-  const width = Math.max(220, Math.floor(rect.width || 420));
-  const height = Math.max(140, Math.floor(rect.height || 240));
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = Math.floor(width * dpr);
-  canvas.height = Math.floor(height * dpr);
-  const previewCtx = canvas.getContext("2d");
-  previewCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  previewCtx.clearRect(0, 0, width, height);
-  previewCtx.fillStyle = "#ffffff";
-  previewCtx.fillRect(0, 0, width, height);
-
-  if (muted) {
-    previewCtx.strokeStyle = "#dce5df";
-    previewCtx.lineWidth = 1;
-    for (let x = 18; x < width; x += 42) {
-      previewCtx.beginPath();
-      previewCtx.moveTo(x, 12);
-      previewCtx.lineTo(x, height - 12);
-      previewCtx.stroke();
-    }
-    for (let y = 18; y < height; y += 36) {
-      previewCtx.beginPath();
-      previewCtx.moveTo(12, y);
-      previewCtx.lineTo(width - 12, y);
-      previewCtx.stroke();
-    }
-  }
-
-  const bounds = computeBounds(projection);
-  const categories = state.data.annotations[colorBy] || [];
-  const pad = muted ? 16 : 22;
-  const usableW = Math.max(1, width - pad * 2);
-  const usableH = Math.max(1, height - pad * 2);
-  const xSpan = bounds.maxX - bounds.minX || 1;
-  const ySpan = bounds.maxY - bounds.minY || 1;
-  const scale = Math.min(usableW / xSpan, usableH / ySpan);
-  const plotW = xSpan * scale;
-  const plotH = ySpan * scale;
-  const offsetX = pad + (usableW - plotW) / 2;
-  const offsetY = pad + (usableH - plotH) / 2;
-  const step = Math.max(1, Math.floor(state.data.cells.length / 14000));
-
-  for (let i = 0; i < state.data.cells.length; i += step) {
-    const cell = state.data.cells[i];
-    const point = coordinateFor(cell, projection);
-    if (!point) continue;
-    const [xVal, yVal] = point;
-    if (!Number.isFinite(xVal) || !Number.isFinite(yVal)) continue;
-    const x = offsetX + (xVal - bounds.minX) * scale;
-    const y = height - offsetY - (yVal - bounds.minY) * scale;
-    const code = cell[schema[colorBy]];
-    const color = categories[code]?.color || "#64748b";
-    previewCtx.globalAlpha = muted ? 0.2 : 0.78;
-    previewCtx.fillStyle = muted ? "#788590" : color;
-    previewCtx.beginPath();
-    previewCtx.arc(x, y, radius, 0, Math.PI * 2);
-    previewCtx.fill();
-  }
-  previewCtx.globalAlpha = 1;
+function shouldSwitchBarseqYAxis(datasetId) {
+  return !["E15", "E17"].includes(datasetId);
 }
 
 function getCategories(field = state.colorBy) {
@@ -255,16 +291,19 @@ function getCategories(field = state.colorBy) {
 }
 
 function codeFor(cell, field = state.colorBy) {
-  return cell[schema[field]];
+  return cell[state.schema[field]];
 }
 
 function isVisible(cell) {
+  const libraryColumn = state.schema.library_id;
+  if (libraryColumn !== undefined && cell[libraryColumn] !== state.selectedLibraryCode) return false;
   if (state.selectedCodes.size === 0) return true;
   return state.selectedCodes.has(codeFor(cell));
 }
 
 function computeBounds(projection) {
-  if (state.bounds.has(projection)) return state.bounds.get(projection);
+  const cacheKey = `${projection}:${state.selectedLibraryCode}`;
+  if (state.bounds.has(cacheKey)) return state.bounds.get(cacheKey);
   if (projection === "slices") {
     ensureLibraryBounds();
     const libraryCount = state.libraryBounds.length || 1;
@@ -280,6 +319,7 @@ function computeBounds(projection) {
   let maxY = -Infinity;
 
   for (const cell of state.data.cells) {
+    if (state.schema.library_id !== undefined && cell[state.schema.library_id] !== state.selectedLibraryCode) continue;
     const x = cell[map.x];
     const y = cell[map.y];
     if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
@@ -292,7 +332,7 @@ function computeBounds(projection) {
   const bounds = Number.isFinite(minX)
     ? { minX, maxX, minY, maxY }
     : { minX: 0, maxX: 1, minY: 0, maxY: 1 };
-  state.bounds.set(projection, bounds);
+  state.bounds.set(cacheKey, bounds);
   return bounds;
 }
 
@@ -352,7 +392,9 @@ function projectPoint(cell, bounds) {
   const offsetY = pad + (usableH - plotH) / 2;
   const point = coordinateFor(cell);
   const x = offsetX + (point[0] - bounds.minX) * scale;
-  const y = state.height - offsetY - (point[1] - bounds.minY) * scale;
+  const y = shouldSwitchBarseqYAxis(state.datasetId)
+    ? offsetY + (point[1] - bounds.minY) * scale
+    : state.height - offsetY - (point[1] - bounds.minY) * scale;
   return [x, y];
 }
 
@@ -381,7 +423,8 @@ function drawPlot() {
     state.screenY[i] = y;
     const code = codeFor(cell);
     const category = categories[code] || {};
-    ctx.fillStyle = category.color || "#64748b";
+    const expression = state.activeGene?.values[i] || 0;
+    ctx.fillStyle = state.activeGene ? expressionColor(expression, state.activeGene.max) : (category.color || "#64748b");
     ctx.globalAlpha = activeCount ? 0.92 : 0.78;
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -395,6 +438,10 @@ function drawPlot() {
 
 function renderLegend() {
   els.legend.replaceChildren();
+  if (state.activeGene) {
+    els.legend.innerHTML = `<div class="gene-legend"><strong>${escapeHtml(state.activeGene.gene)}</strong><div class="gene-gradient"></div><div><span>0</span><span>${state.activeGene.max.toFixed(2)}</span></div><p>E11 counts, colored to the 99th percentile.</p></div>`;
+    return;
+  }
   const fragment = document.createDocumentFragment();
   getCategories().forEach((category, code) => {
     const button = document.createElement("button");
@@ -404,6 +451,7 @@ function renderLegend() {
     const hasFilter = state.selectedCodes.size > 0;
     button.classList.toggle("active", selected || !hasFilter);
     button.classList.toggle("dimmed", hasFilter && !selected);
+    button.setAttribute("aria-pressed", String(selected || !hasFilter));
     button.innerHTML = `
       <span class="swatch" style="background:${category.color}"></span>
       <span class="legend-name" title="${escapeHtml(category.label)}">${escapeHtml(category.label)}</span>
@@ -422,27 +470,6 @@ function renderLegend() {
   els.legend.append(fragment);
 }
 
-function renderBars() {
-  els.bars.replaceChildren();
-  const categories = [...getCategories()].sort((a, b) => b.count - a.count);
-  const maxCount = Math.max(...categories.map((item) => item.count), 1);
-  const fragment = document.createDocumentFragment();
-
-  categories.forEach((category) => {
-    const row = document.createElement("div");
-    row.className = "bar-row";
-    const width = Math.max(0.5, (category.count / maxCount) * 100);
-    row.innerHTML = `
-      <span class="bar-name" title="${escapeHtml(category.label)}">${escapeHtml(category.label)}</span>
-      <span class="bar-track"><span class="bar-fill" style="width:${width}%;background:${category.color}"></span></span>
-      <span class="bar-count">${fmt.format(category.count)}</span>
-    `;
-    fragment.append(row);
-  });
-
-  els.bars.append(fragment);
-}
-
 function renderGeneTable() {
   const query = els.geneSearch.value.trim().toLowerCase();
   const genes = state.data.genes
@@ -452,47 +479,75 @@ function renderGeneTable() {
 
   genes.forEach((gene) => {
     const row = document.createElement("tr");
+    if (state.countIndex) {
+      row.tabIndex = 0;
+      row.title = `Plot ${gene.gene} expression`;
+    }
     row.innerHTML = `
       <td>${escapeHtml(gene.gene)}</td>
       <td>${fmt.format(gene.n_cells)}</td>
       <td>${Number(gene.mean_counts ?? gene.mean).toFixed(2)}</td>
       <td>${Number(gene.pct_dropout_by_counts).toFixed(1)}%</td>
     `;
+    if (state.countIndex) {
+      row.addEventListener("click", () => loadBarseqGene(gene.gene));
+      row.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") loadBarseqGene(gene.gene);
+      });
+    }
     fragment.append(row);
   });
 
   els.geneTable.replaceChildren(fragment);
 }
 
-function renderQcSummary() {
-  els.qcGrid.replaceChildren();
-  const labels = {
-    n_counts: "Molecule counts",
-    n_genes_by_counts: "Detected genes",
-    total_counts: "Total counts",
-  };
-  const fragment = document.createDocumentFragment();
+async function loadBarseqGene(requestedGene) {
+  const geneIndex = state.geneLookup.get(requestedGene.trim().toLowerCase());
+  if (geneIndex === undefined) return;
+  const gene = state.countIndex.genes[geneIndex];
+  const shard = state.countIndex.shards.find((item) => geneIndex >= item.start && geneIndex < item.start + item.count);
+  let buffer = state.shardCache.get(shard.file);
+  if (!buffer) {
+    const response = await fetch(state.countBaseUrl + shard.file);
+    if (!response.ok) throw new Error(`Could not load counts for ${gene}`);
+    const stream = new Blob([await response.arrayBuffer()]).stream().pipeThrough(new DecompressionStream("gzip"));
+    buffer = await new Response(stream).arrayBuffer();
+    state.shardCache.set(shard.file, buffer);
+  }
+  const values = decodeGeneRecord(buffer, geneIndex - shard.start, state.countIndex.n_cells);
+  const nonzero = Array.from(values).filter((value) => value > 0).sort((a, b) => a - b);
+  const max = nonzero[Math.min(nonzero.length - 1, Math.floor(nonzero.length * 0.99))] || 1;
+  state.activeGene = { gene, values, max };
+  els.geneSearch.value = gene;
+  els.plotTitle.textContent = [projectionMap[state.projection].label, selectedLibrary()?.label, gene].filter(Boolean).join(" · ");
+  renderLegend();
+  drawPlot();
+}
 
-  Object.entries(state.data.qc || {}).forEach(([key, values]) => {
-    const card = document.createElement("article");
-    card.className = "qc-card";
-    const median = values.Median ?? values.median ?? 0;
-    const mean = values.Mean ?? values.mean ?? 0;
-    const min = values["Min."] ?? values.min ?? 0;
-    const max = values["Max."] ?? values.max ?? 0;
-    card.innerHTML = `
-      <strong>${escapeHtml(labels[key] || key)}</strong>
-      <div class="qc-stats">
-        <div><span>Median</span><br>${fmt.format(Math.round(median))}</div>
-        <div><span>Mean</span><br>${fmt.format(Math.round(mean))}</div>
-        <div><span>Min</span><br>${fmt.format(Math.round(min))}</div>
-        <div><span>Max</span><br>${fmt.format(Math.round(max))}</div>
-      </div>
-    `;
-    fragment.append(card);
-  });
+function decodeGeneRecord(buffer, targetRecord, cellCount) {
+  const view = new DataView(buffer);
+  const recordCount = view.getUint32(0, true);
+  let offset = 4;
+  for (let record = 0; record < recordCount; record += 1) {
+    const nnz = view.getUint32(offset, true); offset += 4;
+    if (record === targetRecord) {
+      const values = new Float32Array(cellCount);
+      const valueOffset = offset + nnz * 4;
+      for (let index = 0; index < nnz; index += 1) values[view.getUint32(offset + index * 4, true)] = view.getFloat32(valueOffset + index * 4, true);
+      return values;
+    }
+    offset += nnz * 8;
+  }
+  throw new Error("Gene record was not found");
+}
 
-  els.qcGrid.append(fragment);
+function expressionColor(value, max) {
+  if (value <= 0) return "#dfe6e2";
+  const t = Math.min(1, value / max);
+  const r = Math.round(242 - t * 207);
+  const g = Math.round(236 - t * 184);
+  const b = Math.round(220 - t * 66);
+  return `rgb(${r},${g},${b})`;
 }
 
 function showTooltip(event) {

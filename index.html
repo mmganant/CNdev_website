@@ -5,48 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta
       name="description"
-      content="Multomic atlas of cerebellar development"
+      content="Transcriptomic atlas of cerebellar development"
     >
-    <title>Multomic atlas of cerebellar development</title>
-    <link rel="stylesheet" href="assets/styles.css">
+    <title>Transcriptomic atlas of cerebellar development</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/styles.css?v=20260824-1">
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to datasets</a>
     <nav class="navbar" aria-label="Primary navigation">
-      <a class="brand" href="#home" aria-label="Multomic atlas of cerebellar development home">
-        <span class="brand-mark">Multomic atlas of cerebellar development</span>
-        <span>Mouse Cerebellum Atlas</span>
+      <a class="brand" href="#home" aria-label="Transcriptomic atlas of cerebellar development home">
+        <span class="brand-mark" aria-hidden="true">CN</span>
+        <span class="brand-copy"><strong>Atlas of Cerebellar Development</strong><small>Anant et al (2026)</small></span>
       </a>
       <div class="nav-links">
-        <a href="#overview">Overview</a>
-        <a href="#spatial">BARseq3</a>
-        <a href="#singlecell">scRNA-seq</a>
-        <a href="#explorer">Explorer</a>
-        <a href="#data">Data</a>
+        <a href="#spatial">Spatial BARseq3 data</a>
+        <a href="#singlecell">Single-cell data</a>
       </div>
     </nav>
 
     <header id="home" class="hero">
       <div class="hero-copy">
         <p class="eyebrow">BARseq3 + scRNA-seq</p>
-        <h1>Multomic atlas of cerebellar development</h1>
+        <h1>Transcriptomic atlas of cerebellar development</h1>
         <p>
-          Explorer for BARseq3 and scRNAseq cerebellar development, a companion to "Excitatory progenitors drive cerebellar nuclei development and evolution (Anant et al, 2026)"
+          Explore BARseq3 spatial transcriptomics and scRNA-seq across cerebellar development. A companion to “Excitatory progenitors drive cerebellar nuclei development and evolution” (Anant et al., 2026).
         </p>
-        <div class="hero-actions" aria-label="Primary actions">
-          <a class="button primary" href="#explorer">Explore Atlas</a>
-          <a class="button secondary" href="#data">Inspect Data</a>
-        </div>
       </div>
-      <figure class="hero-figure">
-        <canvas id="heroCanvas" aria-label="E12 spatial atlas preview"></canvas>
-        <figcaption>
-          Cerebellar development map colored by fine annotation. Use the atlas below to switch projections,
-          filter cell sets, and export figures.
-        </figcaption>
-      </figure>
     </header>
 
-    <main>
+    <main id="main-content">
+      <section class="atlas-overview" aria-labelledby="overviewTitle">
+        <div class="section-inner overview-layout">
+          <div class="overview-copy">
+            <p class="eyebrow">One atlas, two modalities</p>
+            <h2 id="overviewTitle">Explore our cerebellar developmental datasets</h2>
+            <p>For raw and processed data objects, visit: https://zenodo.org/records/21796565</p>
+          </div>
+          <div class="journey-grid" aria-label="Atlas workflow">
+            <a class="journey-card" href="#spatial">
+              <div class="journey-media">
+                <img src="assets/images/barseq3_schematic.jpg" alt="BARseq3 spatial transcriptomics schematic across cerebellar developmental stages" loading="lazy" decoding="async">
+              </div>
+              <div class="journey-content">
+                <span class="journey-number" aria-hidden="true"></span>
+                <strong>Explore spatial transcriptomics data</strong>
+                <span>View cell types and gene expression in coronal sections of the developing mouse cerebellum. More information about BARseq3 can be found here: https://www.biorxiv.org/content/10.64898/2026.05.13.724900v1</span>
+                <em>Explote BARseq3 datasets <span aria-hidden="true">&rarr;</span></em>
+              </div>
+            </a>
+            <a class="journey-card" href="#singlecell">
+              <div class="journey-media">
+                <img src="assets/images/scrnaseq_schematic.jpg" alt="scRNA-seq UMAP schematic of mouse and chicken cerebellar development" loading="lazy" decoding="async">
+              </div>
+              <div class="journey-content">
+                <span class="journey-number" aria-hidden="true"></span>
+                <strong>Explore scRNA-seq data</strong>
+                <span>View cell types and gene expression across transcriptomic embeddings of the developing cerebellum.</span>
+                <em>Open single-cell explorer <span aria-hidden="true">&rarr;</span></em>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
       <section id="spatial" class="section spatial-band">
         <div class="section-inner">
           <div class="section-title">
@@ -55,44 +79,28 @@
             <p>
               Developmental cerebellar sections profiled using BARseq3 spatial transcriptomics (Qi*, Anant*, Faltine-Gonzalez* et al, biorxiv, 2026)
             </p>
+            <p class="section-guidance">Choose a timepoint to load it in the interactive explorer. Postnatal datasets marked “queued” will be added later.</p>
           </div>
           <div class="stage-grid" id="stageGrid">
-            <a class="stage-card live" href="#explorer" data-stage="E12">
-              <canvas aria-label="E12 atlas thumbnail"></canvas>
-              <span>E12</span>
-            </a>
-            <button class="stage-card" type="button" data-stage="E11">
-              <canvas aria-label="E11 placeholder thumbnail"></canvas>
+            <button class="stage-card live" type="button" data-stage="E11">
+              <img src="assets/images/barseq/e11.png" alt="E11 BARseq3 spatial atlas">
               <span>E11</span>
             </button>
-            <button class="stage-card" type="button" data-stage="E13">
-              <canvas aria-label="E13 placeholder thumbnail"></canvas>
-              <span>E13</span>
+            <button class="stage-card live" type="button" data-stage="E12"><img src="assets/images/barseq/e12.png" alt="E12 BARseq3 spatial atlas"><span>E12</span></button>
+            <button class="stage-card live" type="button" data-stage="E13"><img src="assets/images/barseq/e13.png" alt="E13 BARseq3 spatial atlas"><span>E13</span></button>
+            <button class="stage-card live" type="button" data-stage="E13.5"><img src="assets/images/barseq/e13-5.png" alt="E13.5 BARseq3 spatial atlas"><span>E13.5</span></button>
+            <button class="stage-card live" type="button" data-stage="E14"><img src="assets/images/barseq/e14.png" alt="E14 BARseq3 spatial atlas"><span>E14</span></button>
+            <button class="stage-card live" type="button" data-stage="E15"><img src="assets/images/barseq/e15.png" alt="E15 BARseq3 spatial atlas"><span>E15</span></button>
+            <button class="stage-card live" type="button" data-stage="E17"><img src="assets/images/barseq/e17.png" alt="E17 BARseq3 spatial atlas"><span>E17</span></button>
+            <button class="stage-card" type="button" data-stage="P0" disabled>
+              <span class="stage-placeholder" aria-hidden="true">P0</span><span>P0</span>
             </button>
-            <button class="stage-card" type="button" data-stage="P0">
-              <canvas aria-label="P0 placeholder thumbnail"></canvas>
-              <span>P0</span>
+            <button class="stage-card" type="button" data-stage="P4" disabled>
+              <span class="stage-placeholder" aria-hidden="true">P4</span><span>P4</span>
             </button>
-            <button class="stage-card" type="button" data-stage="P4">
-              <canvas aria-label="P4 placeholder thumbnail"></canvas>
-              <span>P4</span>
+            <button class="stage-card" type="button" data-stage="P56" disabled>
+              <span class="stage-placeholder" aria-hidden="true">P56</span><span>P56</span>
             </button>
-            <button class="stage-card" type="button" data-stage="P56">
-              <canvas aria-label="P56 placeholder thumbnail"></canvas>
-              <span>P56</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section id="singlecell" class="section singlecell-band">
-        <div class="section-inner singlecell-layout">
-          <div>
-            <p class="eyebrow">scRNA-seq</p>
-            <h2>scRNAseq integrated embeddings</h2>
-            <p>
-              Integrated single-cell and single-nuclei RNAseq dataset embeddings of the developing cerebellum from Anant et al (2026), ....
-            </p>
           </div>
         </div>
       </section>
@@ -100,8 +108,9 @@
       <section id="explorer" class="explorer-section">
         <div class="explorer-header">
           <div>
-            <p class="eyebrow" id="datasetSource">Loading dataset</p>
-            <h2>Interactive BARseq3 Developmental Cerebellum Atlas</h2>
+            <p class="eyebrow">Interactive spatial atlas</p>
+            <h2>Explore the BARseq3 atlas</h2>
+            <p class="source-line"><span>Loaded dataset</span><strong id="datasetSource">Loading dataset</strong></p>
           </div>
           <dl class="stats" aria-label="Dataset summary">
             <div><dt>Cells</dt><dd id="statCells">--</dd></div>
@@ -115,17 +124,23 @@
           <aside class="controls" aria-label="Explorer controls">
             <section>
               <div class="section-head">
-                <h3>Projection</h3>
+                <h3><span class="control-step">1</span> Projection</h3>
               </div>
               <div class="segmented" id="projectionControls" role="group" aria-label="Projection">
-                <button data-projection="spatial" class="active" type="button">Spatial</button>
-                <button data-projection="umap" type="button">UMAP</button>
-                <button data-projection="slices" type="button">Libraries</button>
+                <button data-projection="spatial" class="active" type="button" aria-pressed="true">Spatial</button>
               </div>
             </section>
 
             <section>
-              <label class="field-label" for="colorBy">Color by</label>
+              <div class="section-head">
+                <h3><span class="control-step">2</span> Library</h3>
+                <span>Show one</span>
+              </div>
+              <div id="libraryControls" class="library-selector" role="group" aria-label="BARseq3 library"></div>
+            </section>
+
+            <section>
+              <label class="field-label" for="colorBy"><span class="control-step">3</span> Color by</label>
               <select id="colorBy">
                 <option value="finer_cell_types">Fine cell type</option>
                 <option value="cell_types">Broad cell class</option>
@@ -140,14 +155,14 @@
             <section>
               <div class="range-row">
                 <label class="field-label" for="pointSize">Point size</label>
-                <output id="pointSizeValue" for="pointSize">2.4</output>
+                <output id="pointSizeValue" for="pointSize">2.5</output>
               </div>
-              <input id="pointSize" type="range" min="1" max="6" step="0.2" value="2.4">
+              <input id="pointSize" type="range" min="0.5" max="6" step="0.1" value="2.5">
             </section>
 
             <section>
               <div class="section-head">
-                <h3>Annotation Sets</h3>
+                <h3>Filter cell types</h3>
                 <button class="subtle" id="resetFilters" type="button">Show all</button>
               </div>
               <div class="legend" id="legend"></div>
@@ -161,7 +176,11 @@
                   <p class="eyebrow">Local AnnData browser</p>
                   <h3 id="plotTitle">Spatial map</h3>
                 </div>
-                <div class="viewer-actions">
+                <div class="viewer-utilities">
+                  <label class="viewer-gene-search" for="geneSearch">
+                    <span>Visualize gene</span>
+                    <input id="geneSearch" type="search" placeholder="Type a gene name" aria-label="Search genes">
+                  </label>
                   <button id="downloadPng" type="button">Export PNG</button>
                 </div>
               </div>
@@ -173,17 +192,11 @@
 
             <div class="lower-grid">
               <section class="panel">
-                <div class="section-head">
-                  <h3>Annotation Counts</h3>
-                  <span id="countLabel">Fine cell type</span>
-                </div>
-                <div class="bars" id="bars"></div>
-              </section>
-
-              <section class="panel">
-                <div class="section-head">
-                  <h3>Gene Summary</h3>
-                  <input id="geneSearch" type="search" placeholder="Search genes" aria-label="Search genes">
+                <div class="section-head gene-catalog-head">
+                  <div>
+                    <h3>Gene catalog</h3>
+                    <p>Select a row to plot expression. Use the search above to filter genes.</p>
+                  </div>
                 </div>
                 <div class="table-wrap">
                   <table>
@@ -200,27 +213,71 @@
                 </div>
               </section>
 
-              <section class="panel qc-panel">
-                <div class="section-head">
-                  <h3>QC Summary</h3>
-                  <span>Per cell</span>
-                </div>
-                <div class="qc-grid" id="qcGrid"></div>
-              </section>
             </div>
           </section>
         </div>
       </section>
 
-      
+      <section id="singlecell" class="section singlecell-band">
+        <div class="section-inner">
+          <div class="singlecell-intro">
+            <p class="eyebrow">scRNA-seq</p>
+            <h2>Explore scRNA-seq datasets</h2>
+            <p>
+              Integrated single-cell and single-nuclei RNA-seq embeddings of the developing cerebellum from Anant et al. (2026).
+            </p>
+            <p class="section-guidance">Select a dataset card, choose an annotation, or search for any gene to visualize its expression on the UMAP.</p>
+          </div>
+          <div id="scrnaEmbeddingGrid" class="scrna-embedding-grid" aria-label="All scRNA-seq dataset UMAPs"></div>
+          <div id="scrnaExplorer" class="scrna-explorer">
+            <div class="scrna-toolbar">
+              <label>
+                <span>Dataset</span>
+                <select id="scrnaDataset" aria-label="scRNA-seq dataset"></select>
+              </label>
+              <label>
+                <span>Color by</span>
+                <select id="scrnaColorBy" aria-label="scRNA-seq annotation"></select>
+              </label>
+              <label>
+                <span>Visualize gene</span>
+                <input id="scrnaGene" type="search" placeholder="Search all genes" autocomplete="off" aria-label="scRNA-seq gene expression">
+                <div id="scrnaGeneResults" class="gene-search-results" hidden></div>
+              </label>
+              <button id="scrnaReset" type="button">Show all</button>
+              <button id="scrnaDownload" type="button">Export PNG</button>
+            </div>
+            <div class="scrna-summary" aria-live="polite">
+              <strong id="scrnaTitle">Loading scRNA-seq datasets</strong>
+              <span id="scrnaStats">--</span>
+            </div>
+            <div class="scrna-workspace">
+              <div class="scrna-canvas-wrap">
+                <canvas id="singleCellCanvas" aria-label="Interactive scRNA-seq UMAP"></canvas>
+                <div id="scrnaTooltip" class="tooltip" hidden></div>
+              </div>
+              <div id="scrnaLegend" class="legend scrna-legend" aria-label="scRNA-seq annotation legend"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
 
     <footer class="footer">
-      <span>Manjari Anant</span>
-      <span>Built for multiomic cerebellum development atlas exploration</span>
-      <a href="https://mmganant.github.io/CNdev_website/">Design inspiration</a>
+      <div class="footer-brand">
+        <span class="brand-mark" aria-hidden="true">CN</span>
+        <div><strong>Cerebellar Development</strong><span>Transcriptomic atlas</span></div>
+      </div>
+      <p>BARseq3 spatial transcriptomics and scRNA-seq exploration across cerebellar development.</p>
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="#home">Back to top</a>
+        <a href="#spatial">Spatial data</a>
+        <a href="#singlecell">Single-cell data</a>
+      </nav>
     </footer>
 
-    <script src="assets/app.js" defer></script>
+    <script src="assets/app.js?v=20260824-1" defer></script>
+    <script src="assets/scrna.js?v=20260824-1" defer></script>
   </body>
 </html>
