@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/styles.css?v=20260824-1">
+    <link rel="stylesheet" href="assets/styles.css?v=20260825-2">
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to datasets</a>
@@ -37,25 +37,23 @@
 
     <!-- Atlas introduction -->
     <header id="home" class="hero">
-      <div class="hero-copy">
+      <div class="hero-line">
         <p class="eyebrow">BARseq3 + scRNA-seq</p>
         <h1>Transcriptomic atlas of cerebellar development</h1>
-        <p>
+        <p class="hero-intro">
           Explore BARseq3 spatial transcriptomics and scRNA-seq across cerebellar development. A companion to “Excitatory progenitors drive cerebellar nuclei development and evolution” (Anant et al., 2026).
+        </p>
+        <p class="hero-resources">
+          <span>For raw and processed data objects, visit: <a href="https://zenodo.org/records/21796565">https://zenodo.org/records/21796565</a></span>
+          <span>More information about BARseq3 can be found here: <a href="https://www.biorxiv.org/content/10.64898/2026.05.13.724900v1">https://www.biorxiv.org/content/10.64898/2026.05.13.724900v1</a></span>
         </p>
       </div>
     </header>
 
     <main id="main-content">
       <!-- Modality overview -->
-      <section class="atlas-overview" aria-labelledby="overviewTitle">
-        <div class="section-inner overview-layout">
-          <div class="overview-copy">
-            <p class="eyebrow">One atlas, two modalities</p>
-            <h2 id="overviewTitle">Explore our cerebellar developmental datasets</h2>
-            <p>For raw and processed data objects, visit: https://zenodo.org/records/21796565</p>
-          </div>
-          <div class="journey-grid" aria-label="Atlas workflow">
+      <section class="atlas-overview" aria-label="Atlas modalities">
+        <div class="journey-grid" aria-label="Atlas workflow">
             <a class="journey-card" href="#spatial">
               <div class="journey-media">
                 <img
@@ -68,8 +66,8 @@
               <div class="journey-content">
                 <span class="journey-number" aria-hidden="true"></span>
                 <strong>Explore spatial transcriptomics data</strong>
-                <span>View cell types and gene expression in coronal sections of the developing mouse cerebellum. More information about BARseq3 can be found here: https://www.biorxiv.org/content/10.64898/2026.05.13.724900v1</span>
-                <em>Explote BARseq3 datasets <span aria-hidden="true">&rarr;</span></em>
+                <span>View cell types and gene expression in coronal sections of the developing mouse cerebellum.</span>
+                <em>Explore BARseq3 datasets <span aria-hidden="true">&rarr;</span></em>
               </div>
             </a>
             <a class="journey-card" href="#singlecell">
@@ -88,7 +86,6 @@
                 <em>Open single-cell explorer <span aria-hidden="true">&rarr;</span></em>
               </div>
             </a>
-          </div>
         </div>
       </section>
 
