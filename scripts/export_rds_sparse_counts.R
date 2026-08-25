@@ -10,6 +10,8 @@ genes_per_shard <- if (length(args) >= 4) as.integer(args[[4]]) else 64L
 
 datasets <- list(
   list(file = "URL_082026.rds", slug = "url"),
+  list(file = "chicken_excitatory.rds", slug = "chicken-excitatory"),
+  list(file = "chicken_inhib.rds", slug = "chicken-inhibitory"),
   list(file = "all_inhib.rds", slug = "all-inhib"),
   list(file = "combined_alltp08_2026.rds", slug = "combined-alltp08-2026")
 )
@@ -30,6 +32,45 @@ add_assay5_names <- function(matrix, assay_slots) {
   matrix
 }
 
+plain_logical_map <- function(map) {
+  values <- map
+  attr(values, "class") <- NULL
+  values
+}
+
+join_assay5_count_layers <- function(layers, assay_slots) {
+  count_layer_names <- names(layers)[startsWith(names(layers), "counts")]
+  if (!length(count_layer_names)) return(NULL)
+
+  feature_map <- assay_slots[["features"]]
+  cell_map <- assay_slots[["cells"]]
+  if (is.null(feature_map) || is.null(cell_map)) return(NULL)
+  feature_values <- plain_logical_map(feature_map)
+  cell_values <- plain_logical_map(cell_map)
+  feature_names <- attr(feature_map, "dimnames")[[1]]
+  cell_names <- attr(cell_map, "dimnames")[[1]]
+  map_layers <- attr(feature_map, "dimnames")[[2]]
+
+  matrices <- lapply(count_layer_names, function(layer_name) {
+    map_index <- match(layer_name, map_layers)
+    if (is.na(map_index)) stop("No feature/cell map found for layer ", layer_name)
+    matrix <- layers[[layer_name]]
+    row_names <- feature_names[feature_values[, map_index]]
+    column_names <- cell_names[cell_values[, map_index]]
+    if (nrow(matrix) != length(row_names) || ncol(matrix) != length(column_names)) {
+      stop("Layer dimensions do not match feature/cell maps for ", layer_name)
+    }
+    dimnames(matrix) <- list(row_names, column_names)
+    matrix
+  })
+
+  reference_genes <- rownames(matrices[[1]])
+  if (any(vapply(matrices, function(matrix) !identical(rownames(matrix), reference_genes), logical(1)))) {
+    stop("Split count layers do not share the same ordered gene set")
+  }
+  do.call(cbind, matrices)
+}
+
 count_matrix <- function(slots, cell_count) {
   assays <- slots[["assays"]]
   for (assay_name in c("RNA", "SCT")) {
@@ -42,6 +83,10 @@ count_matrix <- function(slots, cell_count) {
     layers <- assay_slots[["layers"]]
     if (!is.null(layers) && "counts" %in% names(layers) && ncol(layers[["counts"]]) == cell_count) {
       return(add_assay5_names(layers[["counts"]], assay_slots))
+    }
+    if (!is.null(layers)) {
+      joined_counts <- join_assay5_count_layers(layers, assay_slots)
+      if (!is.null(joined_counts) && ncol(joined_counts) == cell_count) return(joined_counts)
     }
   }
   stop("No complete sparse count matrix was found")

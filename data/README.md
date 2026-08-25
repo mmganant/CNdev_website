@@ -35,3 +35,5 @@ Rscript scripts/export_rds_sparse_counts.R /path/to/rds/folder assets/data/scrna
 
 The exporter stores only nonzero cell indices and count values in small gzip files. The browser downloads
 one shard on demand when a user selects a gene; the raw RDS objects and dense expression layers remain local.
+Seurat v5 objects with counts split across multiple `counts.*` layers are joined during export, so each
+dataset retains its complete gene list without shipping the full Seurat object to the browser.

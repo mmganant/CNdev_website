@@ -15,6 +15,16 @@ datasets <- list(
     title = "URL integrated atlas"
   ),
   list(
+    file = "chicken_excitatory.rds",
+    slug = "chicken-excitatory",
+    title = "Chicken excitatory atlas"
+  ),
+  list(
+    file = "chicken_inhib.rds",
+    slug = "chicken-inhibitory",
+    title = "Chicken inhibitory atlas"
+  ),
+  list(
     file = "all_inhib.rds",
     slug = "all-inhib",
     title = "Integrated inhibitory atlas"

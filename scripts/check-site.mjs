@@ -39,6 +39,19 @@ function validateCountIndex(relativePath, context) {
   if (Number.isFinite(index.n_genes) && index.genes.length !== index.n_genes) {
     failures.push(`${context}: n_genes does not match the gene catalog`);
   }
+  if (!Array.isArray(index.shards) || index.shards.length === 0) {
+    failures.push(`${context}: count index has no shards`);
+    return;
+  }
+  const indexDirectory = path.posix.dirname(relativePath.split(/[?#]/, 1)[0]);
+  let indexedGenes = 0;
+  for (const shard of index.shards) {
+    indexedGenes += shard.count ?? 0;
+    requireFile(path.posix.join(indexDirectory, shard.file), context);
+  }
+  if (Number.isFinite(index.n_genes) && indexedGenes !== index.n_genes) {
+    failures.push(`${context}: shard gene ranges do not match n_genes`);
+  }
 }
 
 const html = fs.readFileSync(projectPath("index.html"), "utf8");
