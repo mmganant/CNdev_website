@@ -1116,6 +1116,21 @@ th:not(:first-child) {
 }
 
 /* Navigation and readability refresh */
+/*
+ * Cerebellar Development Transcriptomic Atlas
+ *
+ * Cascade map
+ * 1. Core tokens and component foundations
+ * 2. Navigation and accessibility
+ * 3. Explorer workspaces and responsive behavior
+ * 4. Atlas presentation refinements
+ * 5. Unified typography and spacing
+ * 6. Clickable modality schematics
+ *
+ * Later sections intentionally refine earlier component foundations. Keep this
+ * order when editing so the published layout remains stable.
+ */
+
 :root {
   --ink: #17231e;
   --soft-ink: #43524b;

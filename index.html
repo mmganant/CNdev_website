@@ -15,10 +15,19 @@
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to datasets</a>
+
+    <!-- Primary navigation -->
     <nav class="navbar" aria-label="Primary navigation">
-      <a class="brand" href="#home" aria-label="Transcriptomic atlas of cerebellar development home">
+      <a
+        class="brand"
+        href="#home"
+        aria-label="Transcriptomic atlas of cerebellar development home"
+      >
         <span class="brand-mark" aria-hidden="true">CN</span>
-        <span class="brand-copy"><strong>Atlas of Cerebellar Development</strong><small>Anant et al (2026)</small></span>
+        <span class="brand-copy">
+          <strong>Atlas of Cerebellar Development</strong>
+          <small>Anant et al (2026)</small>
+        </span>
       </a>
       <div class="nav-links">
         <a href="#spatial">Spatial BARseq3 data</a>
@@ -26,6 +35,7 @@
       </div>
     </nav>
 
+    <!-- Atlas introduction -->
     <header id="home" class="hero">
       <div class="hero-copy">
         <p class="eyebrow">BARseq3 + scRNA-seq</p>
@@ -37,6 +47,7 @@
     </header>
 
     <main id="main-content">
+      <!-- Modality overview -->
       <section class="atlas-overview" aria-labelledby="overviewTitle">
         <div class="section-inner overview-layout">
           <div class="overview-copy">
@@ -47,7 +58,12 @@
           <div class="journey-grid" aria-label="Atlas workflow">
             <a class="journey-card" href="#spatial">
               <div class="journey-media">
-                <img src="assets/images/barseq3_schematic.jpg" alt="BARseq3 spatial transcriptomics schematic across cerebellar developmental stages" loading="lazy" decoding="async">
+                <img
+                  src="assets/images/barseq3_schematic.jpg"
+                  alt="BARseq3 spatial transcriptomics schematic across cerebellar developmental stages"
+                  loading="lazy"
+                  decoding="async"
+                >
               </div>
               <div class="journey-content">
                 <span class="journey-number" aria-hidden="true"></span>
@@ -58,7 +74,12 @@
             </a>
             <a class="journey-card" href="#singlecell">
               <div class="journey-media">
-                <img src="assets/images/scrnaseq_schematic.jpg" alt="scRNA-seq UMAP schematic of mouse and chicken cerebellar development" loading="lazy" decoding="async">
+                <img
+                  src="assets/images/scrnaseq_schematic.jpg"
+                  alt="scRNA-seq UMAP schematic of mouse and chicken cerebellar development"
+                  loading="lazy"
+                  decoding="async"
+                >
               </div>
               <div class="journey-content">
                 <span class="journey-number" aria-hidden="true"></span>
@@ -71,6 +92,7 @@
         </div>
       </section>
 
+      <!-- BARseq3 dataset cards -->
       <section id="spatial" class="section spatial-band">
         <div class="section-inner">
           <div class="section-title">
@@ -86,12 +108,30 @@
               <img src="assets/images/barseq/e11.png" alt="E11 BARseq3 spatial atlas">
               <span>E11</span>
             </button>
-            <button class="stage-card live" type="button" data-stage="E12"><img src="assets/images/barseq/e12.png" alt="E12 BARseq3 spatial atlas"><span>E12</span></button>
-            <button class="stage-card live" type="button" data-stage="E13"><img src="assets/images/barseq/e13.png" alt="E13 BARseq3 spatial atlas"><span>E13</span></button>
-            <button class="stage-card live" type="button" data-stage="E13.5"><img src="assets/images/barseq/e13-5.png" alt="E13.5 BARseq3 spatial atlas"><span>E13.5</span></button>
-            <button class="stage-card live" type="button" data-stage="E14"><img src="assets/images/barseq/e14.png" alt="E14 BARseq3 spatial atlas"><span>E14</span></button>
-            <button class="stage-card live" type="button" data-stage="E15"><img src="assets/images/barseq/e15.png" alt="E15 BARseq3 spatial atlas"><span>E15</span></button>
-            <button class="stage-card live" type="button" data-stage="E17"><img src="assets/images/barseq/e17.png" alt="E17 BARseq3 spatial atlas"><span>E17</span></button>
+            <button class="stage-card live" type="button" data-stage="E12">
+              <img src="assets/images/barseq/e12.png" alt="E12 BARseq3 spatial atlas">
+              <span>E12</span>
+            </button>
+            <button class="stage-card live" type="button" data-stage="E13">
+              <img src="assets/images/barseq/e13.png" alt="E13 BARseq3 spatial atlas">
+              <span>E13</span>
+            </button>
+            <button class="stage-card live" type="button" data-stage="E13.5">
+              <img src="assets/images/barseq/e13-5.png" alt="E13.5 BARseq3 spatial atlas">
+              <span>E13.5</span>
+            </button>
+            <button class="stage-card live" type="button" data-stage="E14">
+              <img src="assets/images/barseq/e14.png" alt="E14 BARseq3 spatial atlas">
+              <span>E14</span>
+            </button>
+            <button class="stage-card live" type="button" data-stage="E15">
+              <img src="assets/images/barseq/e15.png" alt="E15 BARseq3 spatial atlas">
+              <span>E15</span>
+            </button>
+            <button class="stage-card live" type="button" data-stage="E17">
+              <img src="assets/images/barseq/e17.png" alt="E17 BARseq3 spatial atlas">
+              <span>E17</span>
+            </button>
             <button class="stage-card" type="button" data-stage="P0" disabled>
               <span class="stage-placeholder" aria-hidden="true">P0</span><span>P0</span>
             </button>
@@ -105,6 +145,7 @@
         </div>
       </section>
 
+      <!-- Interactive BARseq3 explorer -->
       <section id="explorer" class="explorer-section">
         <div class="explorer-header">
           <div>
@@ -113,10 +154,22 @@
             <p class="source-line"><span>Loaded dataset</span><strong id="datasetSource">Loading dataset</strong></p>
           </div>
           <dl class="stats" aria-label="Dataset summary">
-            <div><dt>Cells</dt><dd id="statCells">--</dd></div>
-            <div><dt>Genes</dt><dd id="statGenes">--</dd></div>
-            <div><dt>Libraries</dt><dd id="statLibraries">--</dd></div>
-            <div><dt>Visible</dt><dd id="statVisible">--</dd></div>
+            <div>
+              <dt>Cells</dt>
+              <dd id="statCells">--</dd>
+            </div>
+            <div>
+              <dt>Genes</dt>
+              <dd id="statGenes">--</dd>
+            </div>
+            <div>
+              <dt>Libraries</dt>
+              <dd id="statLibraries">--</dd>
+            </div>
+            <div>
+              <dt>Visible</dt>
+              <dd id="statVisible">--</dd>
+            </div>
           </dl>
         </div>
 
@@ -218,6 +271,7 @@
         </div>
       </section>
 
+      <!-- Interactive scRNA-seq explorer -->
       <section id="singlecell" class="section singlecell-band">
         <div class="section-inner">
           <div class="singlecell-intro">
@@ -228,7 +282,11 @@
             </p>
             <p class="section-guidance">Select a dataset card, choose an annotation, or search for any gene to visualize its expression on the UMAP.</p>
           </div>
-          <div id="scrnaEmbeddingGrid" class="scrna-embedding-grid" aria-label="All scRNA-seq dataset UMAPs"></div>
+          <div
+            id="scrnaEmbeddingGrid"
+            class="scrna-embedding-grid"
+            aria-label="All scRNA-seq dataset UMAPs"
+          ></div>
           <div id="scrnaExplorer" class="scrna-explorer">
             <div class="scrna-toolbar">
               <label>
@@ -264,6 +322,7 @@
 
     </main>
 
+    <!-- Site footer -->
     <footer class="footer">
       <div class="footer-brand">
         <span class="brand-mark" aria-hidden="true">CN</span>

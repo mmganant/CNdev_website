@@ -1,3 +1,4 @@
+// Data configuration and shared atlas colors
 const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json";
 const BARSEQ_VISIBLE_ANNOTATIONS = ["excitatory_group", "finer_cell_types"];
 
@@ -51,6 +52,7 @@ const categoryLabels = {
   inhibitory: "Inhibitory program",
 };
 
+// DOM references and explorer state
 const els = {
   canvas: document.querySelector("#atlasCanvas"),
   tooltip: document.querySelector("#tooltip"),
@@ -106,6 +108,7 @@ function humanizeField(field) {
 
 init();
 
+// Dataset loading and controls
 async function init() {
   const manifestResponse = await fetch(DATA_MANIFEST_URL);
   if (!manifestResponse.ok) throw new Error(`Could not load ${DATA_MANIFEST_URL}`);

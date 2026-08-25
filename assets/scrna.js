@@ -1,3 +1,4 @@
+// Data configuration and per-dataset metadata visibility
 const SCRNA_MANIFEST_URL = "assets/data/scrna/manifest.json";
 
 const SCRNA_VISIBLE_ANNOTATIONS = {
@@ -20,14 +21,27 @@ function visibleScrnaAnnotations(datasetId, annotations) {
 }
 
 const SCRNA_COLOR_OVERRIDES = new Map([
-  ["extracerebellar-fated", "#111111"], ["intp", "#2ca25f"],
-  ["inta/lat", "#f28e2b"], ["inta", "#e76f9a"], ["lat", "#d62728"],
-  ["medearly", "#8c564b"], ["med early", "#8c564b"], ["early medial", "#8c564b"],
-  ["medlate", "#377eb8"], ["med late", "#377eb8"], ["late medial", "#377eb8"],
-  ["rl", "#78cbe6"], ["vz", "#78cbe6"],
-  ["int/lat prog", "#f2c94c"], ["int+latprog", "#f2c94c"],
-  ["i1", "#f28e2b"], ["i2/3", "#2ca25f"], ["i2", "#2ca25f"], ["i3", "#2ca25f"],
-  ["other", "#d9dedb"], ["others", "#d9dedb"],
+  ["extracerebellar-fated", "#111111"],
+  ["intp", "#2ca25f"],
+  ["inta/lat", "#f28e2b"],
+  ["inta", "#e76f9a"],
+  ["lat", "#d62728"],
+  ["medearly", "#8c564b"],
+  ["med early", "#8c564b"],
+  ["early medial", "#8c564b"],
+  ["medlate", "#377eb8"],
+  ["med late", "#377eb8"],
+  ["late medial", "#377eb8"],
+  ["rl", "#78cbe6"],
+  ["vz", "#78cbe6"],
+  ["int/lat prog", "#f2c94c"],
+  ["int+latprog", "#f2c94c"],
+  ["i1", "#f28e2b"],
+  ["i2/3", "#2ca25f"],
+  ["i2", "#2ca25f"],
+  ["i3", "#2ca25f"],
+  ["other", "#d9dedb"],
+  ["others", "#d9dedb"],
 ]);
 
 function applyScrnaColorOverrides(annotations) {
@@ -39,6 +53,7 @@ function applyScrnaColorOverrides(annotations) {
   }
 }
 
+// DOM references and explorer state
 const scrnaEls = {
   dataset: document.querySelector("#scrnaDataset"),
   colorBy: document.querySelector("#scrnaColorBy"),

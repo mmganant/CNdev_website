@@ -1,0 +1,13 @@
+{
+  "name": "cndev-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Interactive BARseq3 and scRNA-seq atlas of cerebellar development",
+  "scripts": {
+    "check": "node scripts/check-site.mjs",
+    "check:projection": "node scripts/verify_site_data.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
