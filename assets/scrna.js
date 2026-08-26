@@ -1,6 +1,23 @@
 // Data configuration and per-dataset metadata visibility
 const SCRNA_MANIFEST_URL = "assets/data/scrna/manifest.json?v=20260825-2";
 
+const SCRNA_SPECIES_GROUPS = [
+  {
+    id: "mouse",
+    label: "Mouse datasets",
+    scientificName: "Mus musculus",
+    image: "assets/images/mouse.png",
+    datasets: ["url", "all-inhib", "combined-alltp08-2026"],
+  },
+  {
+    id: "chicken",
+    label: "Chicken datasets",
+    scientificName: "Gallus gallus",
+    image: "assets/images/chicken.png",
+    datasets: ["chicken-excitatory", "chicken-inhibitory"],
+  },
+];
+
 const SCRNA_VISIBLE_ANNOTATIONS = {
   url: ["cell_type_coarse", "Sample", "branch", "TimePoint"],
   "all-inhib": [
@@ -242,34 +259,63 @@ function embeddingIndices(name = scrnaState.embedding, schema = scrnaState.schem
 
 async function renderEmbeddingCards() {
   scrnaEls.embeddingGrid.replaceChildren();
-  for (const dataset of scrnaState.manifest.datasets) {
-    let data = scrnaState.dataCache.get(dataset.id);
-    if (!data) {
-      const response = await fetch(dataset.data_url);
-      if (!response.ok) continue;
-      data = await response.json();
-      applyScrnaColorOverrides(data.annotations);
-      scrnaState.dataCache.set(dataset.id, data);
+  const datasetsById = new Map(scrnaState.manifest.datasets.map((dataset) => [dataset.id, dataset]));
+  for (const species of SCRNA_SPECIES_GROUPS) {
+    const row = document.createElement("section");
+    row.className = "scrna-species-row";
+    row.setAttribute("aria-labelledby", `scrna-${species.id}-heading`);
+
+    const identity = document.createElement("div");
+    identity.className = "scrna-species-identity";
+    const speciesImage = document.createElement("img");
+    speciesImage.src = species.image;
+    speciesImage.alt = "";
+    speciesImage.loading = "lazy";
+    const speciesCopy = document.createElement("div");
+    const heading = document.createElement("h3");
+    heading.id = `scrna-${species.id}-heading`;
+    heading.textContent = species.label;
+    const scientificName = document.createElement("p");
+    scientificName.textContent = species.scientificName;
+    speciesCopy.append(heading, scientificName);
+    identity.append(speciesImage, speciesCopy);
+
+    const cards = document.createElement("div");
+    cards.className = "scrna-species-cards";
+    row.append(identity, cards);
+    scrnaEls.embeddingGrid.append(row);
+
+    for (const datasetId of species.datasets) {
+      const dataset = datasetsById.get(datasetId);
+      if (!dataset) continue;
+      let data = scrnaState.dataCache.get(dataset.id);
+      if (!data) {
+        const response = await fetch(dataset.data_url);
+        if (!response.ok) continue;
+        data = await response.json();
+        applyScrnaColorOverrides(data.annotations);
+        scrnaState.dataCache.set(dataset.id, data);
+      }
+      if (!data.metadata.embeddings.includes("umap")) continue;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "scrna-embedding-card";
+      const active = dataset.id === scrnaEls.dataset.value;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+      const canvas = document.createElement("canvas");
+      canvas.setAttribute("aria-label", `${dataset.title} UMAP preview`);
+      const label = document.createElement("span");
+      label.textContent = dataset.title;
+      button.append(canvas, label);
+      button.addEventListener("click", async () => {
+        scrnaEls.dataset.value = dataset.id;
+        await loadScrnaDataset(dataset.id);
+        scrnaEls.explorer.scrollIntoView({ block: "start" });
+      });
+      cards.append(button);
+      drawEmbeddingPreview(canvas, data, dataset.id);
     }
-    if (!data.metadata.embeddings.includes("umap")) continue;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "scrna-embedding-card";
-    const active = dataset.id === scrnaEls.dataset.value;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-pressed", String(active));
-    const canvas = document.createElement("canvas");
-    canvas.setAttribute("aria-label", `${dataset.title} UMAP preview`);
-    const label = document.createElement("span");
-    label.textContent = dataset.title;
-    button.append(canvas, label);
-    button.addEventListener("click", async () => {
-      scrnaEls.dataset.value = dataset.id;
-      await loadScrnaDataset(dataset.id);
-      scrnaEls.explorer.scrollIntoView({ block: "start" });
-    });
-    scrnaEls.embeddingGrid.append(button);
-    drawEmbeddingPreview(canvas, data, dataset.id);
   }
 }
 

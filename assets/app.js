@@ -1,5 +1,5 @@
 // Data configuration and shared atlas colors
-const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json";
+const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json?v=20260826-1";
 const BARSEQ_VISIBLE_ANNOTATIONS = ["excitatory_group", "finer_cell_types"];
 
 const ATLAS_COLOR_OVERRIDES = new Map([

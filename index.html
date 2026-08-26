@@ -98,7 +98,7 @@
             <p>
               Developmental cerebellar sections profiled using BARseq3 spatial transcriptomics (Qi*, Anant*, Faltine-Gonzalez* et al, biorxiv, 2026)
             </p>
-            <p class="section-guidance">Choose a timepoint to load it in the interactive explorer. Postnatal datasets marked “queued” will be added later.</p>
+            <p class="section-guidance">Choose a timepoint to load it in the interactive explorer. P0 and P56 are previewed now and will become interactive when their data objects are added.</p>
           </div>
           <div class="stage-grid" id="stageGrid">
             <button class="stage-card live" type="button" data-stage="E11">
@@ -130,13 +130,16 @@
               <span>E17</span>
             </button>
             <button class="stage-card" type="button" data-stage="P0" disabled>
-              <span class="stage-placeholder" aria-hidden="true">P0</span><span>P0</span>
+              <img src="assets/images/barseq/p0.png" alt="P0 BARseq3 spatial atlas preview">
+              <span>P0</span>
             </button>
-            <button class="stage-card" type="button" data-stage="P4" disabled>
-              <span class="stage-placeholder" aria-hidden="true">P4</span><span>P4</span>
+            <button class="stage-card live" type="button" data-stage="P4">
+              <img src="assets/images/barseq/p4.png" alt="P4 BARseq3 spatial atlas">
+              <span>P4</span>
             </button>
             <button class="stage-card" type="button" data-stage="P56" disabled>
-              <span class="stage-placeholder" aria-hidden="true">P56</span><span>P56</span>
+              <img src="assets/images/barseq/p56.png" alt="P56 BARseq3 spatial atlas preview">
+              <span>P56</span>
             </button>
           </div>
         </div>
@@ -282,7 +285,7 @@
           <div
             id="scrnaEmbeddingGrid"
             class="scrna-embedding-grid"
-            aria-label="All scRNA-seq dataset UMAPs"
+            aria-label="Mouse and chicken scRNA-seq dataset UMAPs"
           ></div>
           <div id="scrnaExplorer" class="scrna-explorer">
             <div class="scrna-toolbar">
@@ -333,7 +336,7 @@
       </nav>
     </footer>
 
-    <script src="assets/app.js?v=20260824-1" defer></script>
-    <script src="assets/scrna.js?v=20260825-2" defer></script>
+    <script src="assets/app.js?v=20260826-1" defer></script>
+    <script src="assets/scrna.js?v=20260826-1" defer></script>
   </body>
 </html>

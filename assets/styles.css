@@ -3543,3 +3543,87 @@ td {
     transition: none;
   }
 }
+
+/* Species-grouped scRNA-seq dataset chooser */
+.scrna-embedding-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+.scrna-species-row {
+  display: grid;
+  grid-template-columns: minmax(9.5rem, 11.5rem) minmax(0, 1fr);
+  gap: clamp(1rem, 2vw, 1.5rem);
+  align-items: stretch;
+  padding: clamp(1rem, 2vw, 1.35rem);
+  border: 1px solid rgba(40, 85, 65, 0.14);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow-soft);
+}
+
+.scrna-species-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 1rem;
+  border-radius: 15px;
+  background: linear-gradient(145deg, #f0f7f3, #ffffff);
+  text-align: center;
+}
+
+.scrna-species-identity img {
+  width: 5.5rem;
+  height: 5.5rem;
+  margin-bottom: 0.65rem;
+  object-fit: contain;
+}
+
+.scrna-species-identity h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.05rem;
+}
+
+.scrna-species-identity p {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-style: italic;
+}
+
+.scrna-species-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.8rem, 1.4vw, 1.1rem);
+  min-width: 0;
+}
+
+@media (max-width: 820px) {
+  .scrna-species-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .scrna-species-identity {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0.85rem;
+    padding: 0.8rem 1rem;
+    text-align: left;
+  }
+
+  .scrna-species-identity img {
+    width: 3.75rem;
+    height: 3.75rem;
+    margin: 0;
+  }
+}
+
+@media (max-width: 620px) {
+  .scrna-species-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
