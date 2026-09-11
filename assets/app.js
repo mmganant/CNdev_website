@@ -52,8 +52,29 @@ const BARSEQ_FIELD_COLOR_OVERRIDES = {
     ["other", "#d3d3d3"],
     ["dcn", "#800080"],
     ["i1", "#ff0000"],
+    ["mli", "#008000"],
     ["i2/3", "#008000"],
   ]),
+};
+
+const BARSEQ_FIELD_CATEGORY_ORDERS = {
+  integrated_cell_type: [
+    "outside cb",
+    "choroid plexus",
+    "astroglia",
+    "glia/oligodendrocytes",
+    "molecular layer interneurons",
+    "granule cells",
+    "dcn",
+    "purkinje cells",
+    "",
+    "midbrain-derived + int/lat dcn",
+    "medial dcn",
+    "midbrain-fated cells",
+    "i1",
+    "unknown",
+  ],
+  CN_exc_inhib: ["other", "dcn", "i1", "mli"],
 };
 
 function normalizedAtlasLabel(label) {
@@ -139,6 +160,7 @@ const state = {
   schema: {},
   datasetId: null,
   selectedLibraryCode: 0,
+  drawOrderCache: new Map(),
 };
 
 const ctx = els.canvas.getContext("2d", { alpha: true });
@@ -195,6 +217,7 @@ async function loadBarseqDataset(id) {
   state.screenY = new Float32Array(state.data.cells.length);
   state.visible = new Uint8Array(state.data.cells.length);
   state.bounds.clear();
+  state.drawOrderCache.clear();
   state.libraryBounds = null;
   state.selectedCodes.clear();
 
@@ -335,6 +358,34 @@ function getCategories(field = state.colorBy) {
   return state.data.annotations[field] || [];
 }
 
+function orderedCategoryEntries(field = state.colorBy) {
+  const categories = getCategories(field);
+  const desiredOrder = BARSEQ_FIELD_CATEGORY_ORDERS[field] || [];
+  const rank = new Map(desiredOrder.map((label, index) => [label, index]));
+  return categories
+    .map((category, code) => ({ category, code }))
+    .sort((a, b) => {
+      const aRank = rank.get(normalizedAtlasLabel(a.category.label)) ?? desiredOrder.length;
+      const bRank = rank.get(normalizedAtlasLabel(b.category.label)) ?? desiredOrder.length;
+      return aRank - bRank || a.code - b.code;
+    });
+}
+
+function drawOrderIndices(field = state.colorBy) {
+  if (state.drawOrderCache.has(field)) return state.drawOrderCache.get(field);
+  const orderedEntries = orderedCategoryEntries(field);
+  const buckets = new Map(orderedEntries.map(({ code }) => [code, []]));
+  const uncategorized = [];
+  state.data.cells.forEach((cell, index) => {
+    const bucket = buckets.get(codeFor(cell, field));
+    (bucket || uncategorized).push(index);
+  });
+  const indices = orderedEntries.flatMap(({ code }) => buckets.get(code));
+  indices.push(...uncategorized);
+  state.drawOrderCache.set(field, indices);
+  return indices;
+}
+
 function codeFor(cell, field = state.colorBy) {
   return cell[state.schema[field]];
 }
@@ -455,7 +506,7 @@ function drawPlot() {
   ctx.save();
   ctx.globalCompositeOperation = "source-over";
 
-  for (let i = 0; i < cells.length; i += 1) {
+  for (const i of drawOrderIndices()) {
     const cell = cells[i];
     const visible = isVisible(cell);
     const point = coordinateFor(cell);
@@ -488,7 +539,7 @@ function renderLegend() {
     return;
   }
   const fragment = document.createDocumentFragment();
-  getCategories().forEach((category, code) => {
+  orderedCategoryEntries().forEach(({ category, code }) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "legend-item";

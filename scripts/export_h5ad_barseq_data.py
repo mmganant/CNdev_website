@@ -25,8 +25,18 @@ FIELD_PALETTES = {
         "i1": "#ffff00", "unknown": "#bbbbbb",
     },
     "CN_exc_inhib": {
-        "other": "#d3d3d3", "dcn": "#800080", "i1": "#ff0000", "i2/3": "#008000",
+        "other": "#d3d3d3", "dcn": "#800080", "i1": "#ff0000",
+        "mli": "#008000", "i2/3": "#008000",
     },
+}
+
+FIELD_ORDERS = {
+    "integrated_cell_type": [
+        "outside cb", "choroid plexus", "astroglia", "glia/oligodendrocytes",
+        "molecular layer interneurons", "granule cells", "dcn", "purkinje cells", "",
+        "midbrain-derived + int/lat dcn", "medial dcn", "midbrain-fated cells", "i1", "unknown",
+    ],
+    "CN_exc_inhib": ["other", "dcn", "i1", "mli"],
 }
 
 
@@ -55,6 +65,25 @@ def label_color(label, field=None):
     for byte in str(label).encode("utf-8"):
         value = (value * 33 + byte) % 2147483647
     return PALETTE[value % len(PALETTE)].lower()
+
+
+def reorder_categories(field, levels, codes):
+    desired = FIELD_ORDERS.get(field)
+    if not desired:
+        return levels, codes
+    rank = {label: index for index, label in enumerate(desired)}
+    old_order = sorted(
+        range(len(levels)),
+        key=lambda index: (
+            rank.get(" ".join(levels[index].strip().lower().replace("_", " ").split()), len(desired)),
+            index,
+        ),
+    )
+    remap = np.empty(len(levels), dtype=np.int32)
+    for new_index, old_index in enumerate(old_order):
+        remap[old_index] = new_index
+    reordered_codes = np.asarray([remap[code] if code >= 0 else code for code in codes], dtype=np.int32)
+    return [levels[index] for index in old_order], reordered_codes
 
 
 def metadata_column(node):
@@ -113,6 +142,7 @@ def export(source, output, title):
             if kind == "numeric":
                 numeric_metadata[field] = values
                 continue
+            levels, values = reorder_categories(field, levels, values)
             codes[field] = values
             counts = np.bincount(values[values >= 0], minlength=len(levels)) if levels else []
             categories[field] = [
