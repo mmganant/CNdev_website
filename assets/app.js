@@ -364,7 +364,7 @@ function renderAll() {
 }
 
 function shouldSwitchBarseqYAxis(datasetId) {
-  return !["E15", "E17"].includes(datasetId);
+  return !["E15", "E17", "P4"].includes(datasetId);
 }
 
 function getCategories(field = state.colorBy) {
