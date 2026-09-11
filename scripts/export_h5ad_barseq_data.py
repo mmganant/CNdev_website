@@ -73,6 +73,13 @@ def safe_int(value):
     return int(value) if np.isfinite(value) else 0
 
 
+def read_var_names(handle):
+    for field in ("_index", "Names"):
+        if field in handle["var"]:
+            return decode(handle[f"var/{field}"][:])
+    raise KeyError("No gene-name field was found in var")
+
+
 def export(source, output, title):
     with h5py.File(source, "r") as handle:
         spatial = handle["obsm/spatial"][:]
@@ -98,7 +105,7 @@ def export(source, output, title):
         n_counts = numeric(handle, "n_counts", count)
         n_genes = numeric(handle, "n_genes_by_counts", count)
         total_counts = numeric(handle, "total_counts", count)
-        var_names = decode(handle["var/_index"][:])
+        var_names = read_var_names(handle)
         genes = []
         for index, gene in enumerate(var_names):
             mean = handle["var/mean"][index] if "var/mean" in handle else 0

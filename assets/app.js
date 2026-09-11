@@ -1,6 +1,11 @@
 // Data configuration and shared atlas colors
-const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json?v=20260826-1";
-const BARSEQ_VISIBLE_ANNOTATIONS = ["excitatory_group", "finer_cell_types"];
+const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json?v=20260910-1";
+const BARSEQ_VISIBLE_ANNOTATIONS = [
+  "excitatory_group",
+  "finer_cell_types",
+  "integrated_cell_type",
+  "CN_exc_inhib",
+];
 
 const ATLAS_COLOR_OVERRIDES = new Map([
   ["extracerebellar-fated", "#111111"],
@@ -50,6 +55,10 @@ const categoryLabels = {
   timepoint: "Timepoint",
   excitatory: "Excitatory program",
   inhibitory: "Inhibitory program",
+  excitatory_group: "Excitatory group",
+  finer_cell_types: "Finer cell types",
+  integrated_cell_type: "Integrated cell type",
+  CN_exc_inhib: "CN excitatory / inhibitory",
 };
 
 // DOM references and explorer state
@@ -80,7 +89,7 @@ const state = {
   manifest: null,
   data: null,
   projection: "spatial",
-  colorBy: "finer_cell_types",
+  colorBy: "integrated_cell_type",
   selectedCodes: new Set(),
   bounds: new Map(),
   libraryBounds: null,
@@ -129,7 +138,7 @@ async function loadBarseqDataset(id) {
   els.colorBy.replaceChildren();
   const annotationFields = BARSEQ_VISIBLE_ANNOTATIONS.filter((field) => state.data.annotations[field]);
   for (const field of annotationFields) els.colorBy.add(new Option(humanizeField(field), field));
-  const preferredField = annotationFields.includes("finer_cell_types") ? "finer_cell_types" : annotationFields[0];
+  const preferredField = annotationFields.includes("integrated_cell_type") ? "integrated_cell_type" : annotationFields[0];
   els.colorBy.value = preferredField;
   state.colorBy = els.colorBy.value;
   state.countIndex = null;
@@ -442,7 +451,7 @@ function drawPlot() {
 function renderLegend() {
   els.legend.replaceChildren();
   if (state.activeGene) {
-    els.legend.innerHTML = `<div class="gene-legend"><strong>${escapeHtml(state.activeGene.gene)}</strong><div class="gene-gradient"></div><div><span>0</span><span>${state.activeGene.max.toFixed(2)}</span></div><p>E11 counts, colored to the 99th percentile.</p></div>`;
+    els.legend.innerHTML = `<div class="gene-legend"><strong>${escapeHtml(state.activeGene.gene)}</strong><div class="gene-gradient"></div><div><span>0</span><span>${state.activeGene.max.toFixed(2)}</span></div><p>${escapeHtml(state.datasetId)} counts, colored to the 99th percentile.</p></div>`;
     return;
   }
   const fragment = document.createDocumentFragment();
@@ -595,7 +604,7 @@ function showTooltip(event) {
 
 function downloadCanvas() {
   const link = document.createElement("a");
-  link.download = `e12-cerebellum-${state.projection}-${state.colorBy}.png`;
+  link.download = `${state.datasetId.toLowerCase()}-cerebellum-${state.projection}-${state.colorBy}.png`;
   link.href = els.canvas.toDataURL("image/png");
   link.click();
 }

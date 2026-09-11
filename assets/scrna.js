@@ -1,5 +1,5 @@
 // Data configuration and per-dataset metadata visibility
-const SCRNA_MANIFEST_URL = "assets/data/scrna/manifest.json?v=20260825-2";
+const SCRNA_MANIFEST_URL = "assets/data/scrna/manifest.json?v=20260910-1";
 
 const SCRNA_SPECIES_GROUPS = [
   {
@@ -7,7 +7,7 @@ const SCRNA_SPECIES_GROUPS = [
     label: "Mouse datasets",
     scientificName: "Mus musculus",
     image: "assets/images/mouse.png",
-    datasets: ["url", "all-inhib", "combined-alltp08-2026"],
+    datasets: ["url", "rl-prog", "all-inhib", "combined-alltp08-2026"],
   },
   {
     id: "chicken",
@@ -20,6 +20,15 @@ const SCRNA_SPECIES_GROUPS = [
 
 const SCRNA_VISIBLE_ANNOTATIONS = {
   url: ["cell_type_coarse", "Sample", "branch", "TimePoint"],
+  "rl-prog": [
+    "predicted_fate",
+    "high_fate_label",
+    "predicted_fate_earlyRL",
+    "high_fate_label_earlyRL",
+    "TimePoint",
+    "Sample",
+    "ident",
+  ],
   "all-inhib": [
     "orig.ident",
     "DCN",
@@ -56,6 +65,14 @@ const SCRNA_VISIBLE_ANNOTATIONS = {
     "subareas",
     "orig.ident",
   ],
+};
+
+const SCRNA_DEFAULT_ANNOTATIONS = {
+  "rl-prog": "predicted_fate",
+  "all-inhib": "ident",
+  "combined-alltp08-2026": "med_2p_branch_new",
+  "chicken-excitatory": "ident",
+  "chicken-inhibitory": "ident",
 };
 
 function visibleScrnaAnnotations(datasetId, annotations) {
@@ -212,6 +229,10 @@ async function loadScrnaDataset(id) {
   scrnaEls.colorBy.replaceChildren();
   const annotationFields = visibleScrnaAnnotations(id, scrnaState.data.annotations);
   for (const field of annotationFields) scrnaEls.colorBy.add(new Option(humanizeScrnaField(field), field));
+  const preferredAnnotation = SCRNA_DEFAULT_ANNOTATIONS[id];
+  if (preferredAnnotation && annotationFields.includes(preferredAnnotation)) {
+    scrnaEls.colorBy.value = preferredAnnotation;
+  }
   scrnaState.colorBy = scrnaEls.colorBy.value;
   scrnaEls.gene.value = "";
   scrnaEls.geneResults.replaceChildren();
@@ -341,7 +362,9 @@ function drawEmbeddingPreview(canvas, data, datasetId) {
   context.fillStyle = "#fff"; context.fillRect(0, 0, width, height);
   const bounds = boundsForEmbedding(name, data, schema);
   const [xi, yi] = embeddingIndices(name, schema);
-  const colorBy = visibleScrnaAnnotations(datasetId, data.annotations)[0];
+  const visibleAnnotations = visibleScrnaAnnotations(datasetId, data.annotations);
+  const requestedDefault = SCRNA_DEFAULT_ANNOTATIONS[datasetId];
+  const colorBy = visibleAnnotations.includes(requestedDefault) ? requestedDefault : visibleAnnotations[0];
   const ci = schema[colorBy];
   const categories = data.annotations[colorBy];
   const xSpan = bounds.maxX - bounds.minX || 1, ySpan = bounds.maxY - bounds.minY || 1;

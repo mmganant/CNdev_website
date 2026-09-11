@@ -10,6 +10,7 @@ genes_per_shard <- if (length(args) >= 4) as.integer(args[[4]]) else 64L
 
 datasets <- list(
   list(file = "URL_082026.rds", slug = "url"),
+  list(file = "RLprog.rds", slug = "rl-prog"),
   list(file = "chicken_excitatory.rds", slug = "chicken-excitatory"),
   list(file = "chicken_inhib.rds", slug = "chicken-inhibitory"),
   list(file = "all_inhib.rds", slug = "all-inhib"),

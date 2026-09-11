@@ -15,6 +15,11 @@ datasets <- list(
     title = "URL integrated atlas"
   ),
   list(
+    file = "RLprog.rds",
+    slug = "rl-prog",
+    title = "RL progenitor atlas"
+  ),
+  list(
     file = "chicken_excitatory.rds",
     slug = "chicken-excitatory",
     title = "Chicken excitatory atlas"

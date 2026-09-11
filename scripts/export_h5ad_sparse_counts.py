@@ -15,11 +15,18 @@ def decode(values):
     return [value.decode("utf-8") if isinstance(value, bytes) else str(value) for value in values]
 
 
+def read_genes(handle):
+    for field in ("_index", "Names"):
+        if field in handle["var"]:
+            return decode(handle[f"var/{field}"][:])
+    raise KeyError("No gene-name field was found in var")
+
+
 def export(source: Path, output: Path, matrix_path="layers/counts", genes_per_shard=64):
     output.mkdir(parents=True, exist_ok=True)
     with h5py.File(source, "r") as handle:
         matrix = handle[matrix_path]
-        genes = decode(handle["var/_index"][:])
+        genes = read_genes(handle)
         n_cells, n_genes = matrix.shape
         shards = []
         for start in range(0, n_genes, genes_per_shard):

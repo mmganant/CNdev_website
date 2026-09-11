@@ -11,24 +11,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600&amp;display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/styles.css?v=20260825-2">
+    <link rel="stylesheet" href="assets/styles.css?v=20260910-1">
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to datasets</a>
 
     <!-- Primary navigation -->
     <nav class="navbar" aria-label="Primary navigation">
-      <a
-        class="brand"
-        href="#home"
-        aria-label="Transcriptomic atlas of cerebellar development home"
-      >
-        <span class="brand-mark" aria-hidden="true">CN</span>
-        <span class="brand-copy">
-          <strong>Atlas of Cerebellar Development</strong>
-          <small>Anant et al (2026)</small>
-        </span>
-      </a>
       <div class="nav-links">
         <a href="#spatial">Spatial BARseq3 data</a>
         <a href="#singlecell">Single-cell data</a>
@@ -98,7 +87,7 @@
             <p>
               Developmental cerebellar sections profiled using BARseq3 spatial transcriptomics (Qi*, Anant*, Faltine-Gonzalez* et al, biorxiv, 2026)
             </p>
-            <p class="section-guidance">Choose a timepoint to load it in the interactive explorer. P0 and P56 are previewed now and will become interactive when their data objects are added.</p>
+            <p class="section-guidance">Choose any embryonic or postnatal timepoint to load it in the interactive explorer.</p>
           </div>
           <div class="stage-grid" id="stageGrid">
             <button class="stage-card live" type="button" data-stage="E11">
@@ -129,16 +118,16 @@
               <img src="assets/images/barseq/e17.png" alt="E17 BARseq3 spatial atlas">
               <span>E17</span>
             </button>
-            <button class="stage-card" type="button" data-stage="P0" disabled>
-              <img src="assets/images/barseq/p0.png" alt="P0 BARseq3 spatial atlas preview">
+            <button class="stage-card live" type="button" data-stage="P0">
+              <img src="assets/images/barseq/p0.png" alt="P0 BARseq3 spatial atlas">
               <span>P0</span>
             </button>
             <button class="stage-card live" type="button" data-stage="P4">
               <img src="assets/images/barseq/p4.png" alt="P4 BARseq3 spatial atlas">
               <span>P4</span>
             </button>
-            <button class="stage-card" type="button" data-stage="P56" disabled>
-              <img src="assets/images/barseq/p56.png" alt="P56 BARseq3 spatial atlas preview">
+            <button class="stage-card live" type="button" data-stage="P56">
+              <img src="assets/images/barseq/p56.png" alt="P56 BARseq3 spatial atlas">
               <span>P56</span>
             </button>
           </div>
@@ -336,7 +325,7 @@
       </nav>
     </footer>
 
-    <script src="assets/app.js?v=20260826-1" defer></script>
-    <script src="assets/scrna.js?v=20260826-1" defer></script>
+    <script src="assets/app.js?v=20260910-1" defer></script>
+    <script src="assets/scrna.js?v=20260910-1" defer></script>
   </body>
 </html>
