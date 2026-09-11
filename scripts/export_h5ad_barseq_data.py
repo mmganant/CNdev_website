@@ -17,15 +17,15 @@ PALETTE = [
 
 FIELD_PALETTES = {
     "integrated_cell_type": {
-        "purkinje cells": "#377eb8", "midbrain-derived + int/lat dcn": "#d62728",
-        "medial dcn": "#f28e2b", "dcn": "#f28e2b", "astroglia": "#808080",
-        "": "#ffffff", "choroid plexus": "#111111", "granule cells": "#2ca25f",
-        "midbrain-fated cells": "#8c564b", "molecular layer interneurons": "#e76f9a",
-        "outside cb": "#9467bd", "glia/oligodendrocytes": "#78cbe6",
-        "i1": "#f2c94c", "unknown": "#bbbbbb",
+        "purkinje cells": "#0000ff", "midbrain-derived + int/lat dcn": "#ff0000",
+        "medial dcn": "#ffa500", "dcn": "#ffa500", "astroglia": "#808080",
+        "": "#ffffff", "choroid plexus": "#000000", "granule cells": "#008000",
+        "midbrain-fated cells": "#a52a2a", "molecular layer interneurons": "#ffc0cb",
+        "outside cb": "#800080", "glia/oligodendrocytes": "#add8e6",
+        "i1": "#ffff00", "unknown": "#bbbbbb",
     },
     "CN_exc_inhib": {
-        "other": "#d3d3d3", "dcn": "#9467bd", "i1": "#d62728", "i2/3": "#2ca25f",
+        "other": "#d3d3d3", "dcn": "#800080", "i1": "#ff0000", "i2/3": "#008000",
     },
 }
 
