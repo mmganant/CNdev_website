@@ -31,14 +31,47 @@ const ATLAS_COLOR_OVERRIDES = new Map([
   ["others", "#d9dedb"],
 ]);
 
+const BARSEQ_FIELD_COLOR_OVERRIDES = {
+  integrated_cell_type: new Map([
+    ["purkinje cells", "#377eb8"],
+    ["midbrain-derived + int/lat dcn", "#d62728"],
+    ["medial dcn", "#f28e2b"],
+    ["dcn", "#f28e2b"],
+    ["astroglia", "#808080"],
+    ["", "#ffffff"],
+    ["choroid plexus", "#111111"],
+    ["granule cells", "#2ca25f"],
+    ["midbrain-fated cells", "#8c564b"],
+    ["molecular layer interneurons", "#e76f9a"],
+    ["outside cb", "#9467bd"],
+    ["glia/oligodendrocytes", "#78cbe6"],
+    ["i1", "#f2c94c"],
+    ["unknown", "#bbbbbb"],
+  ]),
+  CN_exc_inhib: new Map([
+    ["other", "#d3d3d3"],
+    ["dcn", "#9467bd"],
+    ["i1", "#d62728"],
+    ["i2/3", "#2ca25f"],
+  ]),
+};
+
+function normalizedAtlasLabel(label) {
+  return String(label).trim().toLowerCase().replace(/_/g, " ").replace(/\s+/g, " ");
+}
+
 function atlasColorForLabel(label) {
-  const key = String(label).trim().toLowerCase().replace(/_/g, " ").replace(/\s+/g, " ");
+  const key = normalizedAtlasLabel(label);
   return ATLAS_COLOR_OVERRIDES.get(key);
 }
 
 function applyAtlasColorOverrides(annotations) {
-  for (const rows of Object.values(annotations || {})) {
-    for (const row of rows) row.color = atlasColorForLabel(row.label) || row.color;
+  for (const [field, rows] of Object.entries(annotations || {})) {
+    const fieldPalette = BARSEQ_FIELD_COLOR_OVERRIDES[field];
+    for (const row of rows) {
+      const fieldColor = fieldPalette?.get(normalizedAtlasLabel(row.label));
+      row.color = fieldColor || atlasColorForLabel(row.label) || row.color;
+    }
   }
 }
 

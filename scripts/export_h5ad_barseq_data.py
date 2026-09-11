@@ -14,12 +14,30 @@ PALETTE = [
     "#B7791F", "#D946EF", "#64748B", "#16A34A", "#E11D48", "#0891B2",
     "#7C3AED", "#CA8A04", "#475569", "#F97316", "#14B8A6", "#8B5CF6",
 ]
+
+FIELD_PALETTES = {
+    "integrated_cell_type": {
+        "purkinje cells": "#377eb8", "midbrain-derived + int/lat dcn": "#d62728",
+        "medial dcn": "#f28e2b", "dcn": "#f28e2b", "astroglia": "#808080",
+        "": "#ffffff", "choroid plexus": "#111111", "granule cells": "#2ca25f",
+        "midbrain-fated cells": "#8c564b", "molecular layer interneurons": "#e76f9a",
+        "outside cb": "#9467bd", "glia/oligodendrocytes": "#78cbe6",
+        "i1": "#f2c94c", "unknown": "#bbbbbb",
+    },
+    "CN_exc_inhib": {
+        "other": "#d3d3d3", "dcn": "#9467bd", "i1": "#d62728", "i2/3": "#2ca25f",
+    },
+}
+
+
 def decode(values):
     return [value.decode("utf-8") if isinstance(value, bytes) else str(value) for value in values]
 
 
-def label_color(label):
+def label_color(label, field=None):
     key = " ".join(str(label).strip().lower().replace("_", " ").split())
+    if key in FIELD_PALETTES.get(field, {}):
+        return FIELD_PALETTES[field][key]
     if key in {"na", "n/a", "nan", "none", "null", "not available", "missing", "unknown", "unassigned"}:
         return "#9aa39f"
     overrides = {
@@ -98,7 +116,7 @@ def export(source, output, title):
             codes[field] = values
             counts = np.bincount(values[values >= 0], minlength=len(levels)) if levels else []
             categories[field] = [
-                {"label": label, "count": int(counts[index]), "color": label_color(label)}
+                {"label": label, "count": int(counts[index]), "color": label_color(label, field)}
                 for index, label in enumerate(levels)
             ]
 
