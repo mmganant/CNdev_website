@@ -3630,7 +3630,11 @@ td {
 
 /* Restrained scientific-portal finish */
 .navbar {
-  justify-content: flex-end;
+  justify-content: center;
+}
+
+.navbar .nav-links {
+  justify-content: center;
 }
 
 .hero {
