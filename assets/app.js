@@ -102,7 +102,7 @@ const projectionMap = {
 
 const categoryLabels = {
   cell_types: "Cell type",
-  finer_cell_types: "Fine cell type",
+  finer_cell_types: "Precise cell type",
   leiden: "Leiden",
   hybrid_leiden: "Hybrid Leiden",
   library_id: "Library",
@@ -110,7 +110,6 @@ const categoryLabels = {
   excitatory: "Excitatory program",
   inhibitory: "Inhibitory program",
   excitatory_group: "Excitatory group",
-  finer_cell_types: "Finer cell types",
   integrated_cell_type: "Integrated cell type",
   CN_exc_inhib: "CN excitatory / inhibitory",
 };
@@ -172,7 +171,7 @@ const ctx = els.canvas.getContext("2d", { alpha: true });
 const fmt = new Intl.NumberFormat("en-US");
 
 function humanizeField(field) {
-  return field.replace(/[._]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return categoryLabels[field] || field.replace(/[._]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 init();
