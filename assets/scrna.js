@@ -105,6 +105,10 @@ const SCRNA_COLOR_OVERRIDES = new Map([
   ["others", "#d9dedb"],
 ]);
 
+const SCRNA_BACKGROUND_LABELS = new Set([
+  "", "na", "n/a", "nan", "none", "null", "not available", "missing", "unknown", "unassigned",
+]);
+
 function applyScrnaColorOverrides(annotations) {
   for (const rows of Object.values(annotations || {})) {
     for (const row of rows) {
@@ -154,6 +158,7 @@ const scrnaState = {
   screenY: new Float32Array(),
   width: 0,
   height: 0,
+  drawOrderCache: new Map(),
 };
 
 const scrnaCtx = scrnaEls.canvas?.getContext("2d");
@@ -239,6 +244,7 @@ async function loadScrnaDataset(id) {
   scrnaState.schema = Object.fromEntries(scrnaState.data.schema.map((name, index) => [name, index]));
   scrnaState.screenX = new Float32Array(scrnaState.data.cells.length);
   scrnaState.screenY = new Float32Array(scrnaState.data.cells.length);
+  scrnaState.drawOrderCache.clear();
   scrnaState.selected.clear();
   scrnaEls.colorBy.replaceChildren();
   const annotationFields = visibleScrnaAnnotations(id, scrnaState.data.annotations);
@@ -492,6 +498,22 @@ function resizeScrnaCanvas() {
 
 function renderScrna() { renderScrnaLegend(); drawScrna(); }
 
+function scrnaDrawOrderIndices() {
+  if (scrnaState.drawOrderCache.has(scrnaState.colorBy)) return scrnaState.drawOrderCache.get(scrnaState.colorBy);
+  const categories = scrnaState.data.annotations[scrnaState.colorBy] || [];
+  const column = scrnaState.schema[scrnaState.colorBy];
+  const background = [];
+  const foreground = [];
+  scrnaState.data.cells.forEach((cell, index) => {
+    const category = categories[cell[column]];
+    const label = String(category?.label || "").trim().toLowerCase().replace(/_/g, " ").replace(/\s+/g, " ");
+    (SCRNA_BACKGROUND_LABELS.has(label) ? background : foreground).push(index);
+  });
+  const indices = [...background, ...foreground];
+  scrnaState.drawOrderCache.set(scrnaState.colorBy, indices);
+  return indices;
+}
+
 function renderScrnaLegend() {
   if (scrnaState.activeGene) {
     const gene = scrnaState.activeGene;
@@ -530,7 +552,7 @@ function drawScrna() {
   const categories = scrnaState.data.annotations[scrnaState.colorBy];
   const radius = scrnaState.data.cells.length > 45000 ? 1.15 : 1.45;
   scrnaCtx.globalAlpha = 0.76;
-  for (let i = 0; i < scrnaState.data.cells.length; i += 1) {
+  for (const i of scrnaDrawOrderIndices()) {
     const cell = scrnaState.data.cells[i], code = cell[ci];
     const x = offsetX + (cell[xi] - bounds.minX) * scale;
     const y = height - offsetY - (cell[yi] - bounds.minY) * scale;

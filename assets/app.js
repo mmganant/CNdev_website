@@ -77,6 +77,10 @@ const BARSEQ_FIELD_CATEGORY_ORDERS = {
   CN_exc_inhib: ["other", "dcn", "i1", "mli"],
 };
 
+const BACKGROUND_CATEGORY_LABELS = new Set([
+  "", "na", "n/a", "nan", "none", "null", "not available", "missing", "unknown", "unassigned",
+]);
+
 function normalizedAtlasLabel(label) {
   return String(label).trim().toLowerCase().replace(/_/g, " ").replace(/\s+/g, " ");
 }
@@ -389,8 +393,13 @@ function drawOrderIndices(field = state.colorBy) {
     const bucket = buckets.get(codeFor(cell, field));
     (bucket || uncategorized).push(index);
   });
-  const indices = orderedEntries.flatMap(({ code }) => buckets.get(code));
-  indices.push(...uncategorized);
+  const backgroundEntries = orderedEntries.filter(({ category }) => BACKGROUND_CATEGORY_LABELS.has(normalizedAtlasLabel(category.label)));
+  const foregroundEntries = orderedEntries.filter(({ category }) => !BACKGROUND_CATEGORY_LABELS.has(normalizedAtlasLabel(category.label)));
+  const indices = [
+    ...uncategorized,
+    ...backgroundEntries.flatMap(({ code }) => buckets.get(code)),
+    ...foregroundEntries.flatMap(({ code }) => buckets.get(code)),
+  ];
   state.drawOrderCache.set(field, indices);
   return indices;
 }
