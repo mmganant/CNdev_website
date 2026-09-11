@@ -3659,9 +3659,9 @@ td {
 }
 
 .hero-resources span {
-  padding: 0.75rem 1rem;
-  border-block: 1px solid rgba(25, 114, 79, 0.16);
-  background: rgba(255, 255, 255, 0.72);
+  padding: 0.2rem 0;
+  border: 0;
+  background: transparent;
   text-align: center;
 }
 
@@ -3689,6 +3689,31 @@ td {
 .scrna-embedding-card:hover {
   box-shadow: 0 6px 18px rgba(18, 47, 34, 0.1);
   transform: translateY(-1px);
+}
+
+.atlas-overview .journey-grid {
+  gap: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.atlas-overview .journey-content {
+  min-height: 15rem;
+  padding: clamp(1.75rem, 3vw, 2.5rem);
+  align-items: center;
+  text-align: center;
+}
+
+.atlas-overview .journey-content strong {
+  font-size: clamp(1.65rem, 2.3vw, 2.15rem);
+  line-height: 1.1;
+}
+
+.atlas-overview .journey-content > span:not(.journey-number) {
+  max-width: 31rem;
+  font-size: 1rem;
+}
+
+.atlas-overview .journey-content em {
+  font-size: 1.02rem;
 }
 
 @media (min-width: 821px) {
