@@ -3691,29 +3691,29 @@ td {
   transform: translateY(-1px);
 }
 
-.atlas-overview .journey-grid {
-  gap: clamp(1.5rem, 3vw, 2.5rem);
-}
-
-.atlas-overview .journey-content {
-  min-height: 15rem;
-  padding: clamp(1.75rem, 3vw, 2.5rem);
+.navbar .nav-links a,
+.navbar .nav-links a:nth-child(2) {
+  display: flex;
+  min-height: 3.5rem;
+  padding: 0.65rem 1rem;
   align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #263b31;
+  font-size: 1.12rem;
+  font-weight: 700;
   text-align: center;
 }
 
-.atlas-overview .journey-content strong {
-  font-size: clamp(1.65rem, 2.3vw, 2.15rem);
-  line-height: 1.1;
+.navbar .nav-links a + a {
+  border-left: 0;
 }
 
-.atlas-overview .journey-content > span:not(.journey-number) {
-  max-width: 31rem;
-  font-size: 1rem;
-}
-
-.atlas-overview .journey-content em {
-  font-size: 1.02rem;
+.navbar .nav-links a::after {
+  display: none;
 }
 
 @media (min-width: 821px) {
