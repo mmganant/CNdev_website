@@ -3634,7 +3634,9 @@ td {
 }
 
 .hero {
-  min-height: 31rem;
+  min-height: 24rem;
+  padding-top: clamp(3.5rem, 6vw, 5rem);
+  padding-bottom: clamp(3.5rem, 6vw, 5rem);
   background: #f4f8f6;
 }
 
@@ -3658,9 +3660,9 @@ td {
 
 .hero-resources span {
   padding: 0.75rem 1rem;
-  border-left: 3px solid var(--leaf);
+  border-block: 1px solid rgba(25, 114, 79, 0.16);
   background: rgba(255, 255, 255, 0.72);
-  text-align: left;
+  text-align: center;
 }
 
 .hero-resources a {
