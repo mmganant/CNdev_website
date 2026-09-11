@@ -126,6 +126,8 @@ const els = {
   geneCutoffControls: document.querySelector("#geneCutoffControls"),
   geneMinCutoff: document.querySelector("#geneMinCutoff"),
   geneMaxCutoff: document.querySelector("#geneMaxCutoff"),
+  geneMinCutoffValue: document.querySelector("#geneMinCutoffValue"),
+  geneMaxCutoffValue: document.querySelector("#geneMaxCutoffValue"),
   projectionControls: document.querySelector("#projectionControls"),
   libraryControls: document.querySelector("#libraryControls"),
   resetFilters: document.querySelector("#resetFilters"),
@@ -313,10 +315,8 @@ function bindEvents() {
   els.geneSearch.addEventListener("keydown", (event) => {
     if (event.key === "Enter") loadBarseqGene(els.geneSearch.value);
   });
-  [els.geneMinCutoff, els.geneMaxCutoff].forEach((input) => {
-    input.addEventListener("input", updateBarseqGeneCutoffs);
-    input.addEventListener("change", normalizeBarseqGeneCutoffInputs);
-  });
+  els.geneMinCutoff.addEventListener("input", () => updateBarseqGeneCutoffs("min"));
+  els.geneMaxCutoff.addEventListener("input", () => updateBarseqGeneCutoffs("max"));
   els.markerChips.forEach((chip) => {
     chip.addEventListener("click", () => {
       els.geneSearch.value = chip.dataset.gene || chip.textContent.trim();
@@ -593,9 +593,6 @@ function renderGeneTable() {
     }
     row.innerHTML = `
       <td>${escapeHtml(gene.gene)}</td>
-      <td>${fmt.format(gene.n_cells)}</td>
-      <td>${Number(gene.mean_counts ?? gene.mean).toFixed(2)}</td>
-      <td>${Number(gene.pct_dropout_by_counts).toFixed(1)}%</td>
     `;
     if (state.countIndex) {
       row.addEventListener("click", () => loadBarseqGene(gene.gene));
@@ -629,8 +626,11 @@ async function loadBarseqGene(requestedGene) {
   state.activeGene = { gene, values, min: 0, max, observedMax };
   els.geneMinCutoff.value = "0";
   els.geneMinCutoff.max = String(observedMax);
+  els.geneMinCutoff.step = cutoffStep(observedMax);
   els.geneMaxCutoff.value = String(max);
   els.geneMaxCutoff.max = String(observedMax);
+  els.geneMaxCutoff.step = cutoffStep(observedMax);
+  updateBarseqCutoffLabels();
   els.geneCutoffControls.hidden = false;
   els.geneSearch.value = gene;
   els.plotTitle.textContent = [projectionMap[state.projection].label, selectedLibrary()?.label, gene].filter(Boolean).join(" · ");
@@ -655,21 +655,34 @@ function decodeGeneRecord(buffer, targetRecord, cellCount) {
   throw new Error("Gene record was not found");
 }
 
-function updateBarseqGeneCutoffs() {
+function updateBarseqGeneCutoffs(changed) {
   if (!state.activeGene) return;
-  const min = Number(els.geneMinCutoff.value);
-  const max = Number(els.geneMaxCutoff.value);
-  if (!Number.isFinite(min) || !Number.isFinite(max)) return;
-  state.activeGene.min = Math.max(0, Math.min(min, state.activeGene.observedMax));
-  state.activeGene.max = Math.max(state.activeGene.min, Math.min(max, state.activeGene.observedMax));
+  let min = Number(els.geneMinCutoff.value);
+  let max = Number(els.geneMaxCutoff.value);
+  if (changed === "min" && min > max) {
+    max = min;
+    els.geneMaxCutoff.value = String(max);
+  } else if (changed === "max" && max < min) {
+    min = max;
+    els.geneMinCutoff.value = String(min);
+  }
+  state.activeGene.min = min;
+  state.activeGene.max = max;
+  updateBarseqCutoffLabels();
   renderLegend();
   drawPlot();
 }
 
-function normalizeBarseqGeneCutoffInputs() {
-  if (!state.activeGene) return;
-  els.geneMinCutoff.value = String(state.activeGene.min);
-  els.geneMaxCutoff.value = String(state.activeGene.max);
+function updateBarseqCutoffLabels() {
+  els.geneMinCutoffValue.textContent = formatCutoff(els.geneMinCutoff.value);
+  els.geneMaxCutoffValue.textContent = formatCutoff(els.geneMaxCutoff.value);
+}
+
+function cutoffStep(max) {
+  if (max <= 5) return "0.05";
+  if (max <= 20) return "0.1";
+  if (max <= 100) return "0.5";
+  return "1";
 }
 
 function formatCutoff(value) {
@@ -677,11 +690,11 @@ function formatCutoff(value) {
 }
 
 function barseqExpressionColor(value, min, max) {
-  if (value <= min) return "#dfe6e2";
+  if (value <= min) return "#e5e7e6";
   const t = Math.min(1, (value - min) / Math.max(Number.EPSILON, max - min));
-  const r = Math.round(242 - t * 207);
-  const g = Math.round(236 - t * 184);
-  const b = Math.round(220 - t * 66);
+  const r = Math.round(255 - t * 52);
+  const g = Math.round(245 - t * 221);
+  const b = Math.round(240 - t * 211);
   return `rgb(${r},${g},${b})`;
 }
 

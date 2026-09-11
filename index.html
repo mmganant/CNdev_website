@@ -206,13 +206,11 @@
                 <h3>Gene expression scale</h3>
                 <span>Counts</span>
               </div>
-              <div class="cutoff-fields">
-                <label for="geneMinCutoff">Minimum
-                  <input id="geneMinCutoff" type="number" min="0" step="any" inputmode="decimal">
-                </label>
-                <label for="geneMaxCutoff">Maximum
-                  <input id="geneMaxCutoff" type="number" min="0" step="any" inputmode="decimal">
-                </label>
+              <div class="cutoff-sliders">
+                <label for="geneMinCutoff"><span>Minimum</span><output id="geneMinCutoffValue" for="geneMinCutoff">0</output></label>
+                <input id="geneMinCutoff" type="range" min="0" value="0" aria-label="Minimum gene-expression cutoff">
+                <label for="geneMaxCutoff"><span>Maximum</span><output id="geneMaxCutoffValue" for="geneMaxCutoff">1</output></label>
+                <input id="geneMaxCutoff" type="range" min="0" value="1" aria-label="Maximum gene-expression cutoff">
               </div>
               <p>Values outside this range are clipped to the ends of the color scale.</p>
             </section>
@@ -260,9 +258,6 @@
                     <thead>
                       <tr>
                         <th>Gene</th>
-                        <th>Cells</th>
-                        <th>Mean</th>
-                        <th>Dropout</th>
                       </tr>
                     </thead>
                     <tbody id="geneTable"></tbody>
@@ -308,13 +303,11 @@
               </label>
               <div id="scrnaGeneCutoffs" class="gene-cutoff-controls scrna-gene-cutoffs" hidden>
                 <span>Expression scale</span>
-                <div class="cutoff-fields">
-                  <label for="scrnaGeneMin">Minimum
-                    <input id="scrnaGeneMin" type="number" min="0" step="any" inputmode="decimal">
-                  </label>
-                  <label for="scrnaGeneMax">Maximum
-                    <input id="scrnaGeneMax" type="number" min="0" step="any" inputmode="decimal">
-                  </label>
+                <div class="cutoff-sliders">
+                  <label for="scrnaGeneMin"><span>Minimum</span><output id="scrnaGeneMinValue" for="scrnaGeneMin">0</output></label>
+                  <input id="scrnaGeneMin" type="range" min="0" value="0" aria-label="Minimum scRNA-seq expression cutoff">
+                  <label for="scrnaGeneMax"><span>Maximum</span><output id="scrnaGeneMaxValue" for="scrnaGeneMax">1</output></label>
+                  <input id="scrnaGeneMax" type="range" min="0" value="1" aria-label="Maximum scRNA-seq expression cutoff">
                 </div>
               </div>
               <button id="scrnaReset" type="button">Show all</button>
@@ -331,6 +324,16 @@
               </div>
               <div id="scrnaLegend" class="legend scrna-legend" aria-label="scRNA-seq annotation legend"></div>
             </div>
+            <section class="scrna-gene-catalog" aria-labelledby="scrnaGeneCatalogTitle">
+              <div class="section-head gene-catalog-head">
+                <div>
+                  <h3 id="scrnaGeneCatalogTitle">Gene catalog</h3>
+                  <p>Choose a gene to plot it on the UMAP. Use the search field above to narrow the catalog.</p>
+                </div>
+                <span id="scrnaGeneCatalogSummary"></span>
+              </div>
+              <div id="scrnaGeneCatalog" class="gene-name-grid"></div>
+            </section>
           </div>
         </div>
       </section>
@@ -351,7 +354,7 @@
       </nav>
     </footer>
 
-    <script src="assets/app.js?v=20260910-5" defer></script>
-    <script src="assets/scrna.js?v=20260910-2" defer></script>
+    <script src="assets/app.js?v=20260910-6" defer></script>
+    <script src="assets/scrna.js?v=20260910-3" defer></script>
   </body>
 </html>

@@ -123,6 +123,10 @@ const scrnaEls = {
   geneCutoffs: document.querySelector("#scrnaGeneCutoffs"),
   geneMin: document.querySelector("#scrnaGeneMin"),
   geneMax: document.querySelector("#scrnaGeneMax"),
+  geneMinValue: document.querySelector("#scrnaGeneMinValue"),
+  geneMaxValue: document.querySelector("#scrnaGeneMaxValue"),
+  geneCatalog: document.querySelector("#scrnaGeneCatalog"),
+  geneCatalogSummary: document.querySelector("#scrnaGeneCatalogSummary"),
   embeddingGrid: document.querySelector("#scrnaEmbeddingGrid"),
   explorer: document.querySelector("#scrnaExplorer"),
   reset: document.querySelector("#scrnaReset"),
@@ -177,7 +181,10 @@ function bindScrnaEvents() {
     scrnaState.selected.clear();
     renderScrna();
   });
-  scrnaEls.gene.addEventListener("input", () => renderGeneResults(scrnaEls.gene.value));
+  scrnaEls.gene.addEventListener("input", () => {
+    renderGeneResults(scrnaEls.gene.value);
+    renderScrnaGeneCatalog();
+  });
   scrnaEls.gene.addEventListener("focus", () => renderGeneResults(scrnaEls.gene.value));
   scrnaEls.gene.addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -193,10 +200,8 @@ function bindScrnaEvents() {
     scrnaEls.geneCutoffs.hidden = true;
     renderScrna();
   });
-  [scrnaEls.geneMin, scrnaEls.geneMax].forEach((input) => {
-    input.addEventListener("input", updateScrnaGeneCutoffs);
-    input.addEventListener("change", normalizeScrnaGeneCutoffInputs);
-  });
+  scrnaEls.geneMin.addEventListener("input", () => updateScrnaGeneCutoffs("min"));
+  scrnaEls.geneMax.addEventListener("input", () => updateScrnaGeneCutoffs("max"));
   scrnaEls.download.addEventListener("click", () => {
     const link = document.createElement("a");
     const color = scrnaState.activeGene?.gene || scrnaState.colorBy;
@@ -246,6 +251,7 @@ async function loadScrnaDataset(id) {
   scrnaEls.gene.value = "";
   scrnaEls.geneResults.replaceChildren();
   scrnaEls.geneResults.hidden = true;
+  renderScrnaGeneCatalog();
   scrnaEls.title.textContent = scrnaState.data.metadata.title;
   scrnaEls.stats.textContent = `${scrnaFmt.format(scrnaState.data.metadata.n_cells)} cells · ${scrnaFmt.format(scrnaState.countIndex.n_genes)} genes · ${scrnaState.data.metadata.source_file}`;
   await renderEmbeddingCards();
@@ -275,6 +281,24 @@ function renderGeneResults(query) {
     scrnaEls.geneResults.append(button);
   }
   scrnaEls.geneResults.hidden = false;
+}
+
+function renderScrnaGeneCatalog() {
+  if (!scrnaState.countIndex) return;
+  const query = scrnaEls.gene.value.trim().toLowerCase();
+  const matches = scrnaState.countIndex.genes.filter((gene) => !query || gene.toLowerCase().includes(query));
+  const visible = matches.slice(0, 300);
+  scrnaEls.geneCatalog.replaceChildren();
+  const fragment = document.createDocumentFragment();
+  for (const gene of visible) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = gene;
+    button.addEventListener("click", () => loadSparseGene(gene));
+    fragment.append(button);
+  }
+  scrnaEls.geneCatalog.append(fragment);
+  scrnaEls.geneCatalogSummary.textContent = `${scrnaFmt.format(matches.length)} gene${matches.length === 1 ? "" : "s"}${matches.length > visible.length ? ` · showing ${visible.length}` : ""}`;
 }
 
 function humanizeScrnaField(field) {
@@ -421,10 +445,14 @@ async function loadSparseGene(requestedGene) {
   scrnaState.activeGene = { gene, values, min: 0, max, observedMax };
   scrnaEls.geneMin.value = "0";
   scrnaEls.geneMin.max = String(observedMax);
+  scrnaEls.geneMin.step = scrnaCutoffStep(observedMax);
   scrnaEls.geneMax.value = String(max);
   scrnaEls.geneMax.max = String(observedMax);
+  scrnaEls.geneMax.step = scrnaCutoffStep(observedMax);
+  updateScrnaCutoffLabels();
   scrnaEls.geneCutoffs.hidden = false;
   scrnaEls.gene.value = gene;
+  renderScrnaGeneCatalog();
   scrnaEls.geneResults.hidden = true;
   scrnaEls.stats.textContent = `${scrnaFmt.format(scrnaState.data.metadata.n_cells)} cells · ${scrnaFmt.format(scrnaState.countIndex.n_genes)} genes · ${gene} counts`;
   renderScrna();
@@ -516,20 +544,33 @@ function drawScrna() {
   scrnaCtx.globalAlpha = 1;
 }
 
-function updateScrnaGeneCutoffs() {
+function updateScrnaGeneCutoffs(changed) {
   if (!scrnaState.activeGene) return;
-  const min = Number(scrnaEls.geneMin.value);
-  const max = Number(scrnaEls.geneMax.value);
-  if (!Number.isFinite(min) || !Number.isFinite(max)) return;
-  scrnaState.activeGene.min = Math.max(0, Math.min(min, scrnaState.activeGene.observedMax));
-  scrnaState.activeGene.max = Math.max(scrnaState.activeGene.min, Math.min(max, scrnaState.activeGene.observedMax));
+  let min = Number(scrnaEls.geneMin.value);
+  let max = Number(scrnaEls.geneMax.value);
+  if (changed === "min" && min > max) {
+    max = min;
+    scrnaEls.geneMax.value = String(max);
+  } else if (changed === "max" && max < min) {
+    min = max;
+    scrnaEls.geneMin.value = String(min);
+  }
+  scrnaState.activeGene.min = min;
+  scrnaState.activeGene.max = max;
+  updateScrnaCutoffLabels();
   renderScrna();
 }
 
-function normalizeScrnaGeneCutoffInputs() {
-  if (!scrnaState.activeGene) return;
-  scrnaEls.geneMin.value = String(scrnaState.activeGene.min);
-  scrnaEls.geneMax.value = String(scrnaState.activeGene.max);
+function updateScrnaCutoffLabels() {
+  scrnaEls.geneMinValue.textContent = formatScrnaCutoff(scrnaEls.geneMin.value);
+  scrnaEls.geneMaxValue.textContent = formatScrnaCutoff(scrnaEls.geneMax.value);
+}
+
+function scrnaCutoffStep(max) {
+  if (max <= 5) return "0.05";
+  if (max <= 20) return "0.1";
+  if (max <= 100) return "0.5";
+  return "1";
 }
 
 function formatScrnaCutoff(value) {
@@ -537,9 +578,12 @@ function formatScrnaCutoff(value) {
 }
 
 function scrnaExpressionColor(value, min, max) {
-  if (value <= min) return "hsl(220 18% 91%)";
+  if (value <= min) return "#e5e7e6";
   const ratio = Math.max(0, Math.min(1, (value - min) / Math.max(Number.EPSILON, max - min)));
-  return `hsl(${220 - ratio * 210} 82% ${92 - ratio * 48}%)`;
+  const red = Math.round(255 - ratio * 52);
+  const green = Math.round(245 - ratio * 221);
+  const blue = Math.round(240 - ratio * 211);
+  return `rgb(${red},${green},${blue})`;
 }
 
 function showScrnaTooltip(event) {

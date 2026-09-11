@@ -431,7 +431,7 @@ h3 {
 .gene-gradient {
   height: 1rem;
   border-radius: 999px;
-  background: linear-gradient(90deg, hsl(220 82% 92%), hsl(115 82% 70%), hsl(10 82% 44%));
+  background: linear-gradient(90deg, #fff5f0, #fb6a4a, #cb181d);
 }
 
 .gene-legend > div:nth-of-type(2) {
@@ -3742,33 +3742,30 @@ td {
   line-height: 1.45;
 }
 
-.cutoff-fields {
+.cutoff-sliders {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.6rem;
+  gap: 0.25rem;
   margin-top: 0.65rem;
 }
 
-.cutoff-fields label,
-.scrna-toolbar .cutoff-fields label {
-  display: grid;
-  gap: 0.3rem;
+.cutoff-sliders label,
+.scrna-toolbar .cutoff-sliders label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
   min-width: 0;
   color: var(--muted);
   font-size: 0.72rem;
   font-weight: 700;
 }
 
-.cutoff-fields input[type="number"] {
+.cutoff-sliders input[type="range"] {
   width: 100%;
   min-width: 0;
-  min-height: 2.35rem;
-  padding: 0 0.55rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm, 6px);
-  background: var(--paper, #fff);
-  color: var(--ink);
-  font: inherit;
+  min-height: 1.8rem;
+  margin: 0 0 0.35rem;
+  accent-color: #cb181d;
 }
 
 .scrna-gene-cutoffs {
@@ -3781,6 +3778,45 @@ td {
   font-weight: 700;
 }
 
-.scrna-gene-cutoffs .cutoff-fields {
+.scrna-gene-cutoffs .cutoff-sliders {
   margin-top: 0.3rem;
+}
+
+.scrna-gene-catalog {
+  padding: 1rem;
+  border-top: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.gene-name-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: 0.4rem;
+  overflow: auto;
+  max-height: 16rem;
+  margin-top: 0.8rem;
+  padding-right: 0.25rem;
+}
+
+.gene-name-grid button {
+  overflow: hidden;
+  min-height: 2.2rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--line);
+  background: #fbfcfb;
+  color: var(--ink);
+  font-weight: 700;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gene-name-grid button:hover,
+.gene-name-grid button:focus-visible {
+  border-color: #cb181d;
+  background: #fff5f0;
+}
+
+#geneTable td {
+  font-weight: 700;
 }
