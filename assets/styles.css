@@ -3729,3 +3729,58 @@ td {
     white-space: nowrap;
   }
 }
+
+/* Gene-expression scale controls */
+.gene-cutoff-controls[hidden] {
+  display: none;
+}
+
+.gene-cutoff-controls > p {
+  margin: 0.55rem 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.cutoff-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 0.65rem;
+}
+
+.cutoff-fields label,
+.scrna-toolbar .cutoff-fields label {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.cutoff-fields input[type="number"] {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.35rem;
+  padding: 0 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--paper, #fff);
+  color: var(--ink);
+  font: inherit;
+}
+
+.scrna-gene-cutoffs {
+  min-width: 14rem;
+}
+
+.scrna-gene-cutoffs > span {
+  color: var(--soft-ink);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.scrna-gene-cutoffs .cutoff-fields {
+  margin-top: 0.3rem;
+}

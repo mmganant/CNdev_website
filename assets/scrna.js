@@ -120,6 +120,9 @@ const scrnaEls = {
   colorBy: document.querySelector("#scrnaColorBy"),
   gene: document.querySelector("#scrnaGene"),
   geneResults: document.querySelector("#scrnaGeneResults"),
+  geneCutoffs: document.querySelector("#scrnaGeneCutoffs"),
+  geneMin: document.querySelector("#scrnaGeneMin"),
+  geneMax: document.querySelector("#scrnaGeneMax"),
   embeddingGrid: document.querySelector("#scrnaEmbeddingGrid"),
   explorer: document.querySelector("#scrnaExplorer"),
   reset: document.querySelector("#scrnaReset"),
@@ -187,7 +190,12 @@ function bindScrnaEvents() {
     scrnaState.selected.clear();
     scrnaState.activeGene = null;
     scrnaEls.gene.value = "";
+    scrnaEls.geneCutoffs.hidden = true;
     renderScrna();
+  });
+  [scrnaEls.geneMin, scrnaEls.geneMax].forEach((input) => {
+    input.addEventListener("input", updateScrnaGeneCutoffs);
+    input.addEventListener("change", normalizeScrnaGeneCutoffInputs);
   });
   scrnaEls.download.addEventListener("click", () => {
     const link = document.createElement("a");
@@ -221,6 +229,7 @@ async function loadScrnaDataset(id) {
   scrnaState.geneLookup = new Map(scrnaState.countIndex.genes.map((gene, index) => [gene.toLowerCase(), index]));
   scrnaState.shardCache.clear();
   scrnaState.activeGene = null;
+  scrnaEls.geneCutoffs.hidden = true;
   scrnaState.embedding = scrnaState.data.metadata.embeddings.includes("umap") ? "umap" : scrnaState.data.metadata.embeddings[0];
   scrnaState.schema = Object.fromEntries(scrnaState.data.schema.map((name, index) => [name, index]));
   scrnaState.screenX = new Float32Array(scrnaState.data.cells.length);
@@ -384,7 +393,11 @@ function drawEmbeddingPreview(canvas, data, datasetId) {
 async function loadSparseGene(requestedGene) {
   const geneIndex = scrnaState.geneLookup.get(requestedGene.trim().toLowerCase());
   if (geneIndex === undefined) {
-    if (!requestedGene.trim()) { scrnaState.activeGene = null; renderScrna(); }
+    if (!requestedGene.trim()) {
+      scrnaState.activeGene = null;
+      scrnaEls.geneCutoffs.hidden = true;
+      renderScrna();
+    }
     return;
   }
   const gene = scrnaState.countIndex.genes[geneIndex];
@@ -403,8 +416,14 @@ async function loadSparseGene(requestedGene) {
   }
   const values = decodeGeneRecord(buffer, geneIndex - shard.start, scrnaState.countIndex.n_cells);
   const nonzero = Array.from(values).filter((value) => value > 0).sort((a, b) => a - b);
-  const max = nonzero[Math.min(nonzero.length - 1, Math.floor(nonzero.length * 0.99))] || 1;
-  scrnaState.activeGene = { gene, values, max };
+  const observedMax = nonzero[nonzero.length - 1] || 1;
+  const max = nonzero[Math.min(nonzero.length - 1, Math.floor(nonzero.length * 0.99))] || observedMax;
+  scrnaState.activeGene = { gene, values, min: 0, max, observedMax };
+  scrnaEls.geneMin.value = "0";
+  scrnaEls.geneMin.max = String(observedMax);
+  scrnaEls.geneMax.value = String(max);
+  scrnaEls.geneMax.max = String(observedMax);
+  scrnaEls.geneCutoffs.hidden = false;
   scrnaEls.gene.value = gene;
   scrnaEls.geneResults.hidden = true;
   scrnaEls.stats.textContent = `${scrnaFmt.format(scrnaState.data.metadata.n_cells)} cells · ${scrnaFmt.format(scrnaState.countIndex.n_genes)} genes · ${gene} counts`;
@@ -448,7 +467,7 @@ function renderScrna() { renderScrnaLegend(); drawScrna(); }
 function renderScrnaLegend() {
   if (scrnaState.activeGene) {
     const gene = scrnaState.activeGene;
-    scrnaEls.legend.innerHTML = `<div class="gene-legend"><strong>${gene.gene}</strong><div class="gene-gradient"></div><div><span>0</span><span>${gene.max.toFixed(2)}</span></div><p>Sparse counts, colored to the 99th percentile.</p></div>`;
+    scrnaEls.legend.innerHTML = `<div class="gene-legend"><strong>${gene.gene}</strong><div class="gene-gradient"></div><div><span>${formatScrnaCutoff(gene.min)}</span><span>${formatScrnaCutoff(gene.max)}</span></div><p>Sparse counts, clipped to the selected color scale.</p></div>`;
     return;
   }
   const categories = scrnaState.data.annotations[scrnaState.colorBy] || [];
@@ -489,15 +508,37 @@ function drawScrna() {
     const y = height - offsetY - (cell[yi] - bounds.minY) * scale;
     scrnaState.screenX[i] = x; scrnaState.screenY[i] = y;
     if (scrnaState.selected.size > 0 && !scrnaState.selected.has(code)) continue;
-    scrnaCtx.fillStyle = scrnaState.activeGene ? expressionColor(scrnaState.activeGene.values[i], scrnaState.activeGene.max) : (categories[code]?.color || "#64748b");
+    scrnaCtx.fillStyle = scrnaState.activeGene
+      ? scrnaExpressionColor(scrnaState.activeGene.values[i], scrnaState.activeGene.min, scrnaState.activeGene.max)
+      : (categories[code]?.color || "#64748b");
     scrnaCtx.beginPath(); scrnaCtx.arc(x, y, radius, 0, Math.PI * 2); scrnaCtx.fill();
   }
   scrnaCtx.globalAlpha = 1;
 }
 
-function expressionColor(value, max) {
-  if (value <= 0) return "hsl(220 18% 91%)";
-  const ratio = Math.max(0, Math.min(1, value / (max || 1)));
+function updateScrnaGeneCutoffs() {
+  if (!scrnaState.activeGene) return;
+  const min = Number(scrnaEls.geneMin.value);
+  const max = Number(scrnaEls.geneMax.value);
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return;
+  scrnaState.activeGene.min = Math.max(0, Math.min(min, scrnaState.activeGene.observedMax));
+  scrnaState.activeGene.max = Math.max(scrnaState.activeGene.min, Math.min(max, scrnaState.activeGene.observedMax));
+  renderScrna();
+}
+
+function normalizeScrnaGeneCutoffInputs() {
+  if (!scrnaState.activeGene) return;
+  scrnaEls.geneMin.value = String(scrnaState.activeGene.min);
+  scrnaEls.geneMax.value = String(scrnaState.activeGene.max);
+}
+
+function formatScrnaCutoff(value) {
+  return Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+function scrnaExpressionColor(value, min, max) {
+  if (value <= min) return "hsl(220 18% 91%)";
+  const ratio = Math.max(0, Math.min(1, (value - min) / Math.max(Number.EPSILON, max - min)));
   return `hsl(${220 - ratio * 210} 82% ${92 - ratio * 48}%)`;
 }
 

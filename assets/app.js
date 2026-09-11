@@ -123,6 +123,9 @@ const els = {
   colorBy: document.querySelector("#colorBy"),
   pointSize: document.querySelector("#pointSize"),
   pointSizeValue: document.querySelector("#pointSizeValue"),
+  geneCutoffControls: document.querySelector("#geneCutoffControls"),
+  geneMinCutoff: document.querySelector("#geneMinCutoff"),
+  geneMaxCutoff: document.querySelector("#geneMaxCutoff"),
   projectionControls: document.querySelector("#projectionControls"),
   libraryControls: document.querySelector("#libraryControls"),
   resetFilters: document.querySelector("#resetFilters"),
@@ -207,6 +210,7 @@ async function loadBarseqDataset(id) {
     state.countBaseUrl = entry.count_index_url.replace(/index\.json$/, "");
   }
   state.activeGene = null;
+  els.geneCutoffControls.hidden = true;
   state.selectedLibraryCode = 0;
   els.stageCards.forEach((card) => {
     const active = card.dataset.stage === id;
@@ -287,6 +291,7 @@ function bindEvents() {
   els.colorBy.addEventListener("change", () => {
     state.colorBy = els.colorBy.value;
     state.activeGene = null;
+    els.geneCutoffControls.hidden = true;
     state.selectedCodes.clear();
     renderAll();
   });
@@ -298,6 +303,7 @@ function bindEvents() {
 
   els.resetFilters.addEventListener("click", () => {
     state.activeGene = null;
+    els.geneCutoffControls.hidden = true;
     els.geneSearch.value = "";
     state.selectedCodes.clear();
     renderAll();
@@ -306,6 +312,10 @@ function bindEvents() {
   els.geneSearch.addEventListener("input", renderGeneTable);
   els.geneSearch.addEventListener("keydown", (event) => {
     if (event.key === "Enter") loadBarseqGene(els.geneSearch.value);
+  });
+  [els.geneMinCutoff, els.geneMaxCutoff].forEach((input) => {
+    input.addEventListener("input", updateBarseqGeneCutoffs);
+    input.addEventListener("change", normalizeBarseqGeneCutoffInputs);
   });
   els.markerChips.forEach((chip) => {
     chip.addEventListener("click", () => {
@@ -520,7 +530,9 @@ function drawPlot() {
     const code = codeFor(cell);
     const category = categories[code] || {};
     const expression = state.activeGene?.values[i] || 0;
-    ctx.fillStyle = state.activeGene ? expressionColor(expression, state.activeGene.max) : (category.color || "#64748b");
+    ctx.fillStyle = state.activeGene
+      ? barseqExpressionColor(expression, state.activeGene.min, state.activeGene.max)
+      : (category.color || "#64748b");
     ctx.globalAlpha = activeCount ? 0.92 : 0.78;
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -535,7 +547,7 @@ function drawPlot() {
 function renderLegend() {
   els.legend.replaceChildren();
   if (state.activeGene) {
-    els.legend.innerHTML = `<div class="gene-legend"><strong>${escapeHtml(state.activeGene.gene)}</strong><div class="gene-gradient"></div><div><span>0</span><span>${state.activeGene.max.toFixed(2)}</span></div><p>${escapeHtml(state.datasetId)} counts, colored to the 99th percentile.</p></div>`;
+    els.legend.innerHTML = `<div class="gene-legend"><strong>${escapeHtml(state.activeGene.gene)}</strong><div class="gene-gradient"></div><div><span>${formatCutoff(state.activeGene.min)}</span><span>${formatCutoff(state.activeGene.max)}</span></div><p>${escapeHtml(state.datasetId)} counts, clipped to the selected color scale.</p></div>`;
     return;
   }
   const fragment = document.createDocumentFragment();
@@ -612,8 +624,14 @@ async function loadBarseqGene(requestedGene) {
   }
   const values = decodeGeneRecord(buffer, geneIndex - shard.start, state.countIndex.n_cells);
   const nonzero = Array.from(values).filter((value) => value > 0).sort((a, b) => a - b);
-  const max = nonzero[Math.min(nonzero.length - 1, Math.floor(nonzero.length * 0.99))] || 1;
-  state.activeGene = { gene, values, max };
+  const observedMax = nonzero[nonzero.length - 1] || 1;
+  const max = nonzero[Math.min(nonzero.length - 1, Math.floor(nonzero.length * 0.99))] || observedMax;
+  state.activeGene = { gene, values, min: 0, max, observedMax };
+  els.geneMinCutoff.value = "0";
+  els.geneMinCutoff.max = String(observedMax);
+  els.geneMaxCutoff.value = String(max);
+  els.geneMaxCutoff.max = String(observedMax);
+  els.geneCutoffControls.hidden = false;
   els.geneSearch.value = gene;
   els.plotTitle.textContent = [projectionMap[state.projection].label, selectedLibrary()?.label, gene].filter(Boolean).join(" · ");
   renderLegend();
@@ -637,9 +655,30 @@ function decodeGeneRecord(buffer, targetRecord, cellCount) {
   throw new Error("Gene record was not found");
 }
 
-function expressionColor(value, max) {
-  if (value <= 0) return "#dfe6e2";
-  const t = Math.min(1, value / max);
+function updateBarseqGeneCutoffs() {
+  if (!state.activeGene) return;
+  const min = Number(els.geneMinCutoff.value);
+  const max = Number(els.geneMaxCutoff.value);
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return;
+  state.activeGene.min = Math.max(0, Math.min(min, state.activeGene.observedMax));
+  state.activeGene.max = Math.max(state.activeGene.min, Math.min(max, state.activeGene.observedMax));
+  renderLegend();
+  drawPlot();
+}
+
+function normalizeBarseqGeneCutoffInputs() {
+  if (!state.activeGene) return;
+  els.geneMinCutoff.value = String(state.activeGene.min);
+  els.geneMaxCutoff.value = String(state.activeGene.max);
+}
+
+function formatCutoff(value) {
+  return Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+function barseqExpressionColor(value, min, max) {
+  if (value <= min) return "#dfe6e2";
+  const t = Math.min(1, (value - min) / Math.max(Number.EPSILON, max - min));
   const r = Math.round(242 - t * 207);
   const g = Math.round(236 - t * 184);
   const b = Math.round(220 - t * 66);

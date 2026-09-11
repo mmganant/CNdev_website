@@ -201,6 +201,22 @@
               <input id="pointSize" type="range" min="0.5" max="6" step="0.1" value="2.0">
             </section>
 
+            <section id="geneCutoffControls" class="gene-cutoff-controls" hidden>
+              <div class="section-head">
+                <h3>Gene expression scale</h3>
+                <span>Counts</span>
+              </div>
+              <div class="cutoff-fields">
+                <label for="geneMinCutoff">Minimum
+                  <input id="geneMinCutoff" type="number" min="0" step="any" inputmode="decimal">
+                </label>
+                <label for="geneMaxCutoff">Maximum
+                  <input id="geneMaxCutoff" type="number" min="0" step="any" inputmode="decimal">
+                </label>
+              </div>
+              <p>Values outside this range are clipped to the ends of the color scale.</p>
+            </section>
+
             <section>
               <div class="section-head">
                 <h3>Filter cell types</h3>
@@ -290,6 +306,17 @@
                 <input id="scrnaGene" type="search" placeholder="Search all genes" autocomplete="off" aria-label="scRNA-seq gene expression">
                 <div id="scrnaGeneResults" class="gene-search-results" hidden></div>
               </label>
+              <div id="scrnaGeneCutoffs" class="gene-cutoff-controls scrna-gene-cutoffs" hidden>
+                <span>Expression scale</span>
+                <div class="cutoff-fields">
+                  <label for="scrnaGeneMin">Minimum
+                    <input id="scrnaGeneMin" type="number" min="0" step="any" inputmode="decimal">
+                  </label>
+                  <label for="scrnaGeneMax">Maximum
+                    <input id="scrnaGeneMax" type="number" min="0" step="any" inputmode="decimal">
+                  </label>
+                </div>
+              </div>
               <button id="scrnaReset" type="button">Show all</button>
               <button id="scrnaDownload" type="button">Export PNG</button>
             </div>
@@ -324,7 +351,7 @@
       </nav>
     </footer>
 
-    <script src="assets/app.js?v=20260910-4" defer></script>
-    <script src="assets/scrna.js?v=20260910-1" defer></script>
+    <script src="assets/app.js?v=20260910-5" defer></script>
+    <script src="assets/scrna.js?v=20260910-2" defer></script>
   </body>
 </html>
