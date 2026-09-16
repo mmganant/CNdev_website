@@ -62,6 +62,8 @@ P4_PRECISE_COLORS = {
     "Oligodendrocytes": "#3182bd",
 }
 
+CN_COLOR_OVERRIDES = {"Interneurons": "#008000"}
+
 E17_PRECISE_ORDER = list(PRECISE_COLORS)
 P0_PRECISE_ORDER = [
     "Outside Cb",
@@ -181,7 +183,13 @@ def recode(payload, field, labels, preferred_order=None, color_overrides=None):
 def harmonize_dataset(dataset_id, payload):
     cn_labels = labels_for_cells(payload, "CN_exc_inhib")
     cn_labels = ["Interneurons" if label == "i2/3" else label for label in cn_labels]
-    recode(payload, "CN_exc_inhib", cn_labels, ["Other", "DCN", "i1", "Interneurons"])
+    recode(
+        payload,
+        "CN_exc_inhib",
+        cn_labels,
+        ["Other", "DCN", "i1", "Interneurons"],
+        CN_COLOR_OVERRIDES,
+    )
 
     if dataset_id == "E17":
         integrated = labels_for_cells(payload, "integrated_cell_type")
@@ -197,6 +205,12 @@ def harmonize_dataset(dataset_id, payload):
         "Interneurons" if cn_label == "Interneurons" else label
         for label, cn_label in zip(precise, cn_labels)
     ]
+    if "Cb" in precise:
+        integrated = labels_for_cells(payload, "integrated_cell_type")
+        precise = [
+            E17_INTEGRATED_TO_PRECISE[integrated_label] if label == "Cb" else label
+            for label, integrated_label in zip(precise, integrated)
+        ]
     if dataset_id == "P0":
         precise = ["Interneurons" if label == "Glia" else label for label in precise]
         integrated = labels_for_cells(payload, "integrated_cell_type")
@@ -220,7 +234,13 @@ def harmonize_dataset(dataset_id, payload):
             "DCN" if precise_label == "excCN" else "Other" if cn_label == "DCN" else cn_label
             for precise_label, cn_label in zip(precise, cn_labels)
         ]
-        recode(payload, "CN_exc_inhib", cn_labels, ["Other", "DCN", "i1", "Interneurons"])
+        recode(
+            payload,
+            "CN_exc_inhib",
+            cn_labels,
+            ["Other", "DCN", "i1", "Interneurons"],
+            CN_COLOR_OVERRIDES,
+        )
         return
     if dataset_id == "P4":
         recode(payload, "finer_cell_types", precise, color_overrides=P4_PRECISE_COLORS)
@@ -235,7 +255,7 @@ def main():
         payload = json.loads(data_path.read_text(encoding="utf-8"))
         harmonize_dataset(dataset["id"], payload)
         data_path.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
-        dataset["data_url"] = f"{dataset['data_url'].split('?', 1)[0]}?v=20260916-6"
+        dataset["data_url"] = f"{dataset['data_url'].split('?', 1)[0]}?v=20260916-7"
         print(f"Updated {dataset['id']}: {data_path.name}")
     MANIFEST_PATH.write_text(json.dumps(manifest, separators=(",", ":")), encoding="utf-8")
 

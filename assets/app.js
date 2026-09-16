@@ -1,5 +1,5 @@
 // Data configuration and shared atlas colors
-const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json?v=20260916-6";
+const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json?v=20260916-7";
 const BARSEQ_VISIBLE_ANNOTATIONS = [
   "excitatory_group",
   "finer_cell_types",
@@ -64,7 +64,7 @@ const BARSEQ_FIELD_COLOR_OVERRIDES = {
     ["other", "#d3d3d3"],
     ["dcn", "#800080"],
     ["i1", "#ff0000"],
-    ["interneurons", "#ffb6c1"],
+    ["interneurons", "#008000"],
     ["mli", "#008000"],
     ["i2/3", "#008000"],
   ]),
