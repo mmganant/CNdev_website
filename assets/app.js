@@ -192,7 +192,7 @@ function humanizeField(field) {
 }
 
 const EMBRYONIC_BARSEQ_IDS = new Set(["E11", "E12", "E13", "E13.5", "E14", "E15", "E17"]);
-const PRECISE_BARSEQ_IDS = new Set(["P0", "P4"]);
+const PRECISE_BARSEQ_IDS = new Set(["P0", "P4", "P56"]);
 
 function visibleBarseqAnnotations(datasetId) {
   return BARSEQ_VISIBLE_ANNOTATIONS.filter((field) => {
@@ -427,8 +427,13 @@ function drawOrderIndices(field = state.colorBy) {
     const bucket = buckets.get(codeFor(cell, field));
     (bucket || uncategorized).push(index);
   });
-  const backgroundEntries = orderedEntries.filter(({ category }) => BACKGROUND_CATEGORY_LABELS.has(normalizedAtlasLabel(category.label)));
-  const foregroundEntries = orderedEntries.filter(({ category }) => !BACKGROUND_CATEGORY_LABELS.has(normalizedAtlasLabel(category.label)));
+  const isBackground = ({ category }) => {
+    const label = normalizedAtlasLabel(category.label);
+    if (field === "excitatory_group" && /^(unknown|na|n\/a)(?:\b|$)/.test(label)) return true;
+    return BACKGROUND_CATEGORY_LABELS.has(label);
+  };
+  const backgroundEntries = orderedEntries.filter(isBackground);
+  const foregroundEntries = orderedEntries.filter((entry) => !isBackground(entry));
   const indices = [
     ...uncategorized,
     ...backgroundEntries.flatMap(({ code }) => buckets.get(code)),
