@@ -1,5 +1,5 @@
 // Data configuration and shared atlas colors
-const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json?v=20260916-4";
+const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json?v=20260916-5";
 const BARSEQ_VISIBLE_ANNOTATIONS = [
   "excitatory_group",
   "finer_cell_types",

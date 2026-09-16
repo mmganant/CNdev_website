@@ -37,6 +37,28 @@ INTERNEURON_SUBTYPE_COLORS = [
 ]
 
 E17_PRECISE_ORDER = list(PRECISE_COLORS)
+P0_PRECISE_ORDER = [
+    "Outside Cb",
+    "Choroid Plexus",
+    "Astroglia",
+    "Glia/Oligodendrocytes",
+    "Oligodendrocytes",
+    "Cb_prog1",
+    "Molecular Layer Interneurons",
+    "Interneurons",
+    "Interneurons+Glia",
+    "External Granule Layer",
+    "Inner Granule Layer",
+    "Cb_prog2",
+    "Granule cells",
+    "Cb",
+    "Purkinje Cells",
+    "excCN",
+    "Midbrain",
+    "i1",
+    "i1 Neurons",
+    "Unknown",
+]
 E17_INTEGRATED_TO_PRECISE = {
     "Outside Cb": "Outside Cb",
     "Choroid Plexus": "Choroid Plexus",
@@ -162,7 +184,12 @@ def harmonize_dataset(dataset_id, payload):
             else label
             for label, integrated_label in zip(precise, integrated)
         ]
-        recode(payload, "finer_cell_types", precise)
+        recode(payload, "finer_cell_types", precise, P0_PRECISE_ORDER)
+        cn_labels = [
+            "DCN" if precise_label == "excCN" else cn_label
+            for precise_label, cn_label in zip(precise, cn_labels)
+        ]
+        recode(payload, "CN_exc_inhib", cn_labels, ["Other", "DCN", "i1", "Interneurons"])
         return
     recode(payload, "finer_cell_types", precise)
 
@@ -174,7 +201,7 @@ def main():
         payload = json.loads(data_path.read_text(encoding="utf-8"))
         harmonize_dataset(dataset["id"], payload)
         data_path.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
-        dataset["data_url"] = f"{dataset['data_url'].split('?', 1)[0]}?v=20260916-4"
+        dataset["data_url"] = f"{dataset['data_url'].split('?', 1)[0]}?v=20260916-5"
         print(f"Updated {dataset['id']}: {data_path.name}")
     MANIFEST_PATH.write_text(json.dumps(manifest, separators=(",", ":")), encoding="utf-8")
 
