@@ -21,12 +21,12 @@ PRECISE_COLORS = {
     "Purkinje Cells": "#0000ff",
     "excCN": "#ff0000",
     "i1": "#ffff00",
-    "Interneurons": "#008000",
+    "Interneurons": "#ffb6c1",
     "Unknown": "#bbbbbb",
 }
 
 INTERNEURON_SUBTYPE_COLORS = [
-    "#98df8a",  # light green
+    "#ffb6c1",  # light pink
     "#1f77b4",  # blue
     "#ff7f0e",  # orange
     "#9467bd",  # purple
@@ -36,6 +36,32 @@ INTERNEURON_SUBTYPE_COLORS = [
     "#bcbd22",  # olive
 ]
 
+P0_PRECISE_COLORS = {
+    "Outside Cb": "#800080",
+    "Choroid Plexus": "#000000",
+    "Astroglia": "#808080",
+    "Glia/Oligodendrocytes": "#9ecae1",
+    "Oligodendrocytes": "#3182bd",
+    "Cb_prog1": "#17becf",
+    "Interneurons": "#ffb6c1",
+    "External Granule Layer": "#98df8a",
+    "Inner Granule Layer": "#2ca02c",
+    "Cb_prog2": "#006d2c",
+    "Cb": "#00441b",
+    "Purkinje Cells": "#0000ff",
+    "excCN": "#ff0000",
+    "Midbrain": "#a52a2a",
+    "i1 Neurons": "#ffff00",
+    "Unknown": "#bbbbbb",
+}
+
+P4_PRECISE_COLORS = {
+    "Interneurons": "#ffb6c1",
+    "Glia": "#9ecae1",
+    "Glia1": "#6baed6",
+    "Oligodendrocytes": "#3182bd",
+}
+
 E17_PRECISE_ORDER = list(PRECISE_COLORS)
 P0_PRECISE_ORDER = [
     "Outside Cb",
@@ -44,18 +70,14 @@ P0_PRECISE_ORDER = [
     "Glia/Oligodendrocytes",
     "Oligodendrocytes",
     "Cb_prog1",
-    "Molecular Layer Interneurons",
     "Interneurons",
-    "Interneurons+Glia",
     "External Granule Layer",
     "Inner Granule Layer",
     "Cb_prog2",
-    "Granule cells",
     "Cb",
     "Purkinje Cells",
     "excCN",
     "Midbrain",
-    "i1",
     "i1 Neurons",
     "Unknown",
 ]
@@ -141,7 +163,7 @@ def recode(payload, field, labels, preferred_order=None, color_overrides=None):
             "label": label,
             "count": counts[label],
             "color": (
-                integrated_palette_color(label)
+                color_overrides.get(label, integrated_palette_color(label))
                 if field == "finer_cell_types"
                 else color_overrides.get(label, previous.get(label, "#bbbbbb"))
             ),
@@ -184,12 +206,24 @@ def harmonize_dataset(dataset_id, payload):
             else label
             for label, integrated_label in zip(precise, integrated)
         ]
-        recode(payload, "finer_cell_types", precise, P0_PRECISE_ORDER)
+        precise = [
+            {
+                "Molecular Layer Interneurons": "Interneurons",
+                "Interneurons+Glia": "Glia/Oligodendrocytes",
+                "Granule cells": "Inner Granule Layer",
+                "i1": "i1 Neurons",
+            }.get(label, label)
+            for label in precise
+        ]
+        recode(payload, "finer_cell_types", precise, P0_PRECISE_ORDER, P0_PRECISE_COLORS)
         cn_labels = [
-            "DCN" if precise_label == "excCN" else cn_label
+            "DCN" if precise_label == "excCN" else "Other" if cn_label == "DCN" else cn_label
             for precise_label, cn_label in zip(precise, cn_labels)
         ]
         recode(payload, "CN_exc_inhib", cn_labels, ["Other", "DCN", "i1", "Interneurons"])
+        return
+    if dataset_id == "P4":
+        recode(payload, "finer_cell_types", precise, color_overrides=P4_PRECISE_COLORS)
         return
     recode(payload, "finer_cell_types", precise)
 
@@ -201,7 +235,7 @@ def main():
         payload = json.loads(data_path.read_text(encoding="utf-8"))
         harmonize_dataset(dataset["id"], payload)
         data_path.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
-        dataset["data_url"] = f"{dataset['data_url'].split('?', 1)[0]}?v=20260916-5"
+        dataset["data_url"] = f"{dataset['data_url'].split('?', 1)[0]}?v=20260916-6"
         print(f"Updated {dataset['id']}: {data_path.name}")
     MANIFEST_PATH.write_text(json.dumps(manifest, separators=(",", ":")), encoding="utf-8")
 

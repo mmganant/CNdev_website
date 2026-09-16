@@ -1,5 +1,5 @@
 // Data configuration and shared atlas colors
-const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json?v=20260916-5";
+const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json?v=20260916-6";
 const BARSEQ_VISIBLE_ANNOTATIONS = [
   "excitatory_group",
   "finer_cell_types",
@@ -24,9 +24,9 @@ const ATLAS_COLOR_OVERRIDES = new Map([
   ["int/lat prog", "#f2c94c"],
   ["int+latprog", "#f2c94c"],
   ["i1", "#f28e2b"],
-  ["i2/3", "#2ca25f"],
-  ["i2", "#2ca25f"],
-  ["i3", "#2ca25f"],
+  ["i2/3", "#ffb6c1"],
+  ["i2", "#ffb6c1"],
+  ["i3", "#ffb6c1"],
   ["other", "#d9dedb"],
   ["others", "#d9dedb"],
 ]);
@@ -64,7 +64,7 @@ const BARSEQ_FIELD_COLOR_OVERRIDES = {
     ["other", "#d3d3d3"],
     ["dcn", "#800080"],
     ["i1", "#ff0000"],
-    ["interneurons", "#008000"],
+    ["interneurons", "#ffb6c1"],
     ["mli", "#008000"],
     ["i2/3", "#008000"],
   ]),
@@ -191,6 +191,23 @@ function humanizeField(field) {
   return categoryLabels[field] || field.replace(/[._]+/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+const EMBRYONIC_BARSEQ_IDS = new Set(["E11", "E12", "E13", "E13.5", "E14", "E15", "E17"]);
+const PRECISE_BARSEQ_IDS = new Set(["P0", "P4"]);
+
+function visibleBarseqAnnotations(datasetId) {
+  return BARSEQ_VISIBLE_ANNOTATIONS.filter((field) => {
+    if (EMBRYONIC_BARSEQ_IDS.has(datasetId) && field === "finer_cell_types") return false;
+    if (PRECISE_BARSEQ_IDS.has(datasetId) && field === "integrated_cell_type") return false;
+    return true;
+  });
+}
+
+function barseqAnnotationLabel(field, datasetId) {
+  if (EMBRYONIC_BARSEQ_IDS.has(datasetId) && field === "integrated_cell_type") return "Cell type";
+  if (PRECISE_BARSEQ_IDS.has(datasetId) && field === "finer_cell_types") return "Cell type";
+  return humanizeField(field);
+}
+
 init();
 
 // Dataset loading and controls
@@ -212,9 +229,13 @@ async function loadBarseqDataset(id) {
   applyAtlasColorOverrides(state.data.annotations);
   state.schema = Object.fromEntries(state.data.schema.map((field, index) => [field, index]));
   els.colorBy.replaceChildren();
-  const annotationFields = BARSEQ_VISIBLE_ANNOTATIONS.filter((field) => state.data.annotations[field]);
-  for (const field of annotationFields) els.colorBy.add(new Option(humanizeField(field), field));
-  const preferredField = annotationFields.includes("integrated_cell_type") ? "integrated_cell_type" : annotationFields[0];
+  const annotationFields = visibleBarseqAnnotations(id).filter((field) => state.data.annotations[field]);
+  for (const field of annotationFields) els.colorBy.add(new Option(barseqAnnotationLabel(field, id), field));
+  const preferredField = annotationFields.includes("integrated_cell_type")
+    ? "integrated_cell_type"
+    : annotationFields.includes("finer_cell_types")
+      ? "finer_cell_types"
+      : annotationFields[0];
   els.colorBy.value = preferredField;
   state.colorBy = els.colorBy.value;
   state.countIndex = null;
