@@ -24,6 +24,23 @@ PRECISE_COLORS = {
     "Unknown": "#bbbbbb",
 }
 
+P0_PRECISE_COLORS = {
+    "External Granule Layer": PRECISE_COLORS["Granule cells"],
+    "Inner Granule Layer": PRECISE_COLORS["Granule cells"],
+    "i1 Neurons": PRECISE_COLORS["i1"],
+    "Interneurons": PRECISE_COLORS["Interneurons"],
+    "Cb_prog2": PRECISE_COLORS["Granule cells"],
+    "Outside Cb": PRECISE_COLORS["Outside Cb"],
+    "Interneurons+Glia": PRECISE_COLORS["Granule cells"],
+    "Oligodendrocytes": PRECISE_COLORS["Glia/Oligodendrocytes"],
+    "Cb_prog1": PRECISE_COLORS["Glia/Oligodendrocytes"],
+    "excCN": PRECISE_COLORS["excCN"],
+    "Purkinje Cells": PRECISE_COLORS["Purkinje Cells"],
+    "Midbrain": "#a52a2a",
+    "Cb": PRECISE_COLORS["Granule cells"],
+    **PRECISE_COLORS,
+}
+
 E17_PRECISE_ORDER = list(PRECISE_COLORS)
 E17_INTEGRATED_TO_PRECISE = {
     "Outside Cb": "Outside Cb",
@@ -52,7 +69,7 @@ def labels_for_cells(payload, field):
     return [labels[cell[column]] if cell[column] >= 0 else "Unknown" for cell in payload["cells"]]
 
 
-def recode(payload, field, labels, preferred_order=None):
+def recode(payload, field, labels, preferred_order=None, color_overrides=None):
     column = payload["schema"].index(field)
     previous = {row["label"]: row.get("color", "#bbbbbb") for row in payload["annotations"][field]}
     counts = Counter(labels)
@@ -63,11 +80,12 @@ def recode(payload, field, labels, preferred_order=None):
     lookup = {label: code for code, label in enumerate(order)}
     for cell, label in zip(payload["cells"], labels):
         cell[column] = lookup[label]
+    color_overrides = color_overrides or PRECISE_COLORS
     payload["annotations"][field] = [
         {
             "label": label,
             "count": counts[label],
-            "color": PRECISE_COLORS.get(label, previous.get(label, "#bbbbbb")),
+            "color": color_overrides.get(label, previous.get(label, "#bbbbbb")),
         }
         for label in order
     ]
@@ -94,6 +112,15 @@ def harmonize_dataset(dataset_id, payload):
     ]
     if dataset_id == "P0":
         precise = ["Interneurons" if label == "Glia" else label for label in precise]
+        integrated = labels_for_cells(payload, "integrated_cell_type")
+        precise = [
+            E17_INTEGRATED_TO_PRECISE[integrated_label]
+            if label in {"CP", "CN"}
+            else label
+            for label, integrated_label in zip(precise, integrated)
+        ]
+        recode(payload, "finer_cell_types", precise, color_overrides=P0_PRECISE_COLORS)
+        return
     recode(payload, "finer_cell_types", precise)
 
 
@@ -104,7 +131,7 @@ def main():
         payload = json.loads(data_path.read_text(encoding="utf-8"))
         harmonize_dataset(dataset["id"], payload)
         data_path.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
-        dataset["data_url"] = f"{dataset['data_url'].split('?', 1)[0]}?v=20260916-1"
+        dataset["data_url"] = f"{dataset['data_url'].split('?', 1)[0]}?v=20260916-2"
         print(f"Updated {dataset['id']}: {data_path.name}")
     MANIFEST_PATH.write_text(json.dumps(manifest, separators=(",", ":")), encoding="utf-8")
 
