@@ -1,5 +1,5 @@
 // Data configuration and shared atlas colors
-const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json?v=20260910-1";
+const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json?v=20260916-1";
 const BARSEQ_VISIBLE_ANNOTATIONS = [
   "excitatory_group",
   "finer_cell_types",
@@ -32,6 +32,19 @@ const ATLAS_COLOR_OVERRIDES = new Map([
 ]);
 
 const BARSEQ_FIELD_COLOR_OVERRIDES = {
+  finer_cell_types: new Map([
+    ["outside cb", "#800080"],
+    ["choroid plexus", "#000000"],
+    ["astroglia", "#808080"],
+    ["glia/oligodendrocytes", "#add8e6"],
+    ["molecular layer interneurons", "#ffc0cb"],
+    ["granule cells", "#008000"],
+    ["purkinje cells", "#0000ff"],
+    ["exccn", "#ffa500"],
+    ["i1", "#ffff00"],
+    ["interneurons", "#008000"],
+    ["unknown", "#bbbbbb"],
+  ]),
   integrated_cell_type: new Map([
     ["purkinje cells", "#0000ff"],
     ["midbrain-derived + int/lat dcn", "#ff0000"],
@@ -52,6 +65,7 @@ const BARSEQ_FIELD_COLOR_OVERRIDES = {
     ["other", "#d3d3d3"],
     ["dcn", "#800080"],
     ["i1", "#ff0000"],
+    ["interneurons", "#008000"],
     ["mli", "#008000"],
     ["i2/3", "#008000"],
   ]),
@@ -74,7 +88,7 @@ const BARSEQ_FIELD_CATEGORY_ORDERS = {
     "i1",
     "unknown",
   ],
-  CN_exc_inhib: ["other", "dcn", "i1", "mli"],
+  CN_exc_inhib: ["other", "dcn", "i1", "interneurons"],
 };
 
 const BACKGROUND_CATEGORY_LABELS = new Set([

@@ -45,7 +45,6 @@ const SCRNA_VISIBLE_ANNOTATIONS = {
     "sample",
     "collector",
     "orig.ident",
-    "species",
   ],
   "chicken-inhibitory": [
     "cellType",
@@ -54,7 +53,6 @@ const SCRNA_VISIBLE_ANNOTATIONS = {
     "sample",
     "collector",
     "orig.ident",
-    "species",
   ],
   "combined-alltp08-2026": [
     "Sample",

@@ -26,7 +26,7 @@ FIELD_PALETTES = {
     },
     "CN_exc_inhib": {
         "other": "#d3d3d3", "dcn": "#800080", "i1": "#ff0000",
-        "mli": "#008000", "i2/3": "#008000",
+        "mli": "#008000", "i2/3": "#008000", "interneurons": "#008000",
     },
 }
 
@@ -36,7 +36,7 @@ FIELD_ORDERS = {
         "molecular layer interneurons", "granule cells", "dcn", "purkinje cells", "",
         "midbrain-derived + int/lat dcn", "medial dcn", "midbrain-fated cells", "i1", "unknown",
     ],
-    "CN_exc_inhib": ["other", "dcn", "i1", "mli"],
+    "CN_exc_inhib": ["other", "dcn", "i1", "interneurons"],
 }
 
 
