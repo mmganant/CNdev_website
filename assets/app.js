@@ -1,5 +1,5 @@
 // Data configuration and shared atlas colors
-const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json?v=20260916-3";
+const DATA_MANIFEST_URL = "assets/data/barseq-manifest.json?v=20260916-4";
 const BARSEQ_VISIBLE_ANNOTATIONS = [
   "excitatory_group",
   "finer_cell_types",
@@ -40,9 +40,8 @@ const BARSEQ_FIELD_COLOR_OVERRIDES = {
     ["molecular layer interneurons", "#ffc0cb"],
     ["granule cells", "#008000"],
     ["purkinje cells", "#0000ff"],
-    ["exccn", "#ffa500"],
+    ["exccn", "#ff0000"],
     ["i1", "#ffff00"],
-    ["interneurons", "#008000"],
     ["unknown", "#bbbbbb"],
   ]),
   integrated_cell_type: new Map([

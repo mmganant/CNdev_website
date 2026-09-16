@@ -19,11 +19,22 @@ PRECISE_COLORS = {
     "Molecular Layer Interneurons": "#ffc0cb",
     "Granule cells": "#008000",
     "Purkinje Cells": "#0000ff",
-    "excCN": "#ffa500",
+    "excCN": "#ff0000",
     "i1": "#ffff00",
     "Interneurons": "#008000",
     "Unknown": "#bbbbbb",
 }
+
+INTERNEURON_SUBTYPE_COLORS = [
+    "#98df8a",  # light green
+    "#1f77b4",  # blue
+    "#ff7f0e",  # orange
+    "#9467bd",  # purple
+    "#e377c2",  # pink
+    "#17becf",  # cyan
+    "#8c564b",  # brown
+    "#bcbd22",  # olive
+]
 
 E17_PRECISE_ORDER = list(PRECISE_COLORS)
 E17_INTEGRATED_TO_PRECISE = {
@@ -83,6 +94,14 @@ def integrated_palette_color(label):
     return PRECISE_COLORS["Unknown"]
 
 
+def is_interneuron_subtype(label):
+    key = re.sub(r"\s+", " ", str(label).strip().lower().replace("_", " "))
+    return bool(
+        re.fullmatch(r"interneurons?\s*\d*", key)
+        or re.fullmatch(r"inhib(?:\s*prog)?\s*\d*", key)
+    )
+
+
 def recode(payload, field, labels, preferred_order=None, color_overrides=None):
     column = payload["schema"].index(field)
     previous = {row["label"]: row.get("color", "#bbbbbb") for row in payload["annotations"][field]}
@@ -95,7 +114,7 @@ def recode(payload, field, labels, preferred_order=None, color_overrides=None):
     for cell, label in zip(payload["cells"], labels):
         cell[column] = lookup[label]
     color_overrides = color_overrides or PRECISE_COLORS
-    payload["annotations"][field] = [
+    rows = [
         {
             "label": label,
             "count": counts[label],
@@ -107,6 +126,12 @@ def recode(payload, field, labels, preferred_order=None, color_overrides=None):
         }
         for label in order
     ]
+    if field == "finer_cell_types":
+        interneuron_rows = [row for row in rows if is_interneuron_subtype(row["label"])]
+        if len(interneuron_rows) > 1:
+            for index, row in enumerate(interneuron_rows):
+                row["color"] = INTERNEURON_SUBTYPE_COLORS[index % len(INTERNEURON_SUBTYPE_COLORS)]
+    payload["annotations"][field] = rows
 
 
 def harmonize_dataset(dataset_id, payload):
@@ -149,7 +174,7 @@ def main():
         payload = json.loads(data_path.read_text(encoding="utf-8"))
         harmonize_dataset(dataset["id"], payload)
         data_path.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
-        dataset["data_url"] = f"{dataset['data_url'].split('?', 1)[0]}?v=20260916-3"
+        dataset["data_url"] = f"{dataset['data_url'].split('?', 1)[0]}?v=20260916-4"
         print(f"Updated {dataset['id']}: {data_path.name}")
     MANIFEST_PATH.write_text(json.dumps(manifest, separators=(",", ":")), encoding="utf-8")
 
