@@ -2,6 +2,7 @@
 """Apply curated BARseq label harmonization to browser JSON exports."""
 
 import json
+import re
 from collections import Counter
 from pathlib import Path
 
@@ -22,23 +23,6 @@ PRECISE_COLORS = {
     "i1": "#ffff00",
     "Interneurons": "#008000",
     "Unknown": "#bbbbbb",
-}
-
-P0_PRECISE_COLORS = {
-    "External Granule Layer": PRECISE_COLORS["Granule cells"],
-    "Inner Granule Layer": PRECISE_COLORS["Granule cells"],
-    "i1 Neurons": PRECISE_COLORS["i1"],
-    "Interneurons": PRECISE_COLORS["Interneurons"],
-    "Cb_prog2": PRECISE_COLORS["Granule cells"],
-    "Outside Cb": PRECISE_COLORS["Outside Cb"],
-    "Interneurons+Glia": PRECISE_COLORS["Granule cells"],
-    "Oligodendrocytes": PRECISE_COLORS["Glia/Oligodendrocytes"],
-    "Cb_prog1": PRECISE_COLORS["Glia/Oligodendrocytes"],
-    "excCN": PRECISE_COLORS["excCN"],
-    "Purkinje Cells": PRECISE_COLORS["Purkinje Cells"],
-    "Midbrain": "#a52a2a",
-    "Cb": PRECISE_COLORS["Granule cells"],
-    **PRECISE_COLORS,
 }
 
 E17_PRECISE_ORDER = list(PRECISE_COLORS)
@@ -69,6 +53,36 @@ def labels_for_cells(payload, field):
     return [labels[cell[column]] if cell[column] >= 0 else "Unknown" for cell in payload["cells"]]
 
 
+def integrated_palette_color(label):
+    """Map precise-label aliases onto the shared integrated-atlas palette."""
+    key = re.sub(r"\s+", " ", str(label).strip().lower().replace("_", " "))
+    if "outside" in key:
+        return PRECISE_COLORS["Outside Cb"]
+    if key == "cp" or "choroid" in key:
+        return PRECISE_COLORS["Choroid Plexus"]
+    if "astro" in key:
+        return PRECISE_COLORS["Astroglia"]
+    if "molecular layer" in key:
+        return PRECISE_COLORS["Molecular Layer Interneurons"]
+    if "glia" in key or "oligodendro" in key:
+        return PRECISE_COLORS["Glia/Oligodendrocytes"]
+    if "granule" in key or key == "rl" or key == "cb" or key.startswith("cb prog"):
+        return PRECISE_COLORS["Granule cells"]
+    if "purkinje" in key:
+        return PRECISE_COLORS["Purkinje Cells"]
+    if key == "i1" or key.startswith("i1 "):
+        return PRECISE_COLORS["i1"]
+    if any(term in key for term in ("int/lat", "int+lat", "inta", "intp", "lat prog")) or key in {"lat", "lat vz", "int vz"}:
+        return "#ff0000"
+    if "midbrain" in key or key == "isthmus":
+        return "#a52a2a"
+    if key == "exccn" or re.search(r"(^| )(dcn|cn)\d*( |$)", key) or key.startswith("med"):
+        return PRECISE_COLORS["excCN"]
+    if "interneuron" in key or "inhib" in key:
+        return PRECISE_COLORS["Interneurons"]
+    return PRECISE_COLORS["Unknown"]
+
+
 def recode(payload, field, labels, preferred_order=None, color_overrides=None):
     column = payload["schema"].index(field)
     previous = {row["label"]: row.get("color", "#bbbbbb") for row in payload["annotations"][field]}
@@ -85,7 +99,11 @@ def recode(payload, field, labels, preferred_order=None, color_overrides=None):
         {
             "label": label,
             "count": counts[label],
-            "color": color_overrides.get(label, previous.get(label, "#bbbbbb")),
+            "color": (
+                integrated_palette_color(label)
+                if field == "finer_cell_types"
+                else color_overrides.get(label, previous.get(label, "#bbbbbb"))
+            ),
         }
         for label in order
     ]
@@ -119,7 +137,7 @@ def harmonize_dataset(dataset_id, payload):
             else label
             for label, integrated_label in zip(precise, integrated)
         ]
-        recode(payload, "finer_cell_types", precise, color_overrides=P0_PRECISE_COLORS)
+        recode(payload, "finer_cell_types", precise)
         return
     recode(payload, "finer_cell_types", precise)
 
@@ -131,7 +149,7 @@ def main():
         payload = json.loads(data_path.read_text(encoding="utf-8"))
         harmonize_dataset(dataset["id"], payload)
         data_path.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
-        dataset["data_url"] = f"{dataset['data_url'].split('?', 1)[0]}?v=20260916-2"
+        dataset["data_url"] = f"{dataset['data_url'].split('?', 1)[0]}?v=20260916-3"
         print(f"Updated {dataset['id']}: {data_path.name}")
     MANIFEST_PATH.write_text(json.dumps(manifest, separators=(",", ":")), encoding="utf-8")
 
